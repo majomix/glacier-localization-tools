@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="CypherStrategyPermutation.cs" />
     <Compile Include="CypherStrategyXXTEA.cs" />
+    <Compile Include="DatTextFile.cs" />
     <Compile Include="FileVersionSpecificationsUpdate.cs" />
     <Compile Include="FileVersionSpecificationsBase.cs" />
     <Compile Include="GlacierBinaryReader.cs" />

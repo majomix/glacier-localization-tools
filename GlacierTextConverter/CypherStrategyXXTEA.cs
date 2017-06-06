@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,7 +9,7 @@ namespace GlacierTextConverter
 {
     public class CypherStrategyXXTEA : ICypherStrategy
     {
-        private int RunSymmetricCypher(uint firstWord, uint secondWord)
+        private void RunSymmetricCypher(uint firstWord, uint secondWord, BinaryWriter binaryWriter)
         {
             uint[] encryptionKeys = new uint[]
 		    {
@@ -27,12 +28,38 @@ namespace GlacierTextConverter
                 firstWord -= ((secondWord << 4 ^ secondWord >> 5) + secondWord ^ sum + encryptionKeys[(int)((UIntPtr)(sum & 3))]);
             }
 
-            return 226;
+            binaryWriter.Write(firstWord);
+            binaryWriter.Write(secondWord);
         }
 
         public string Decypher(byte[] input)
         {
-            throw new NotImplementedException();
+            if(input.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            byte[] outputArray = new byte[input.Length];
+            MemoryStream output = new MemoryStream(outputArray);
+            BinaryWriter myBinaryWriter = new BinaryWriter(output);
+
+            for(int i = 0; i < input.Length; i += 8)
+            {
+                RunSymmetricCypher(CreateWord(input, i), CreateWord(input, i + 4), myBinaryWriter);
+            }
+
+            int zeroStrippedLength = 0;
+            while (++zeroStrippedLength != input.Length && outputArray[zeroStrippedLength] != 0) ;
+            byte[] zeroStrippedOutputArray = new byte[zeroStrippedLength];
+            Array.Copy(outputArray, zeroStrippedOutputArray, zeroStrippedLength);
+            return new string(Encoding.GetEncoding(65001).GetChars(zeroStrippedOutputArray));
+        }
+
+        private uint CreateWord(byte[] input, int start)
+        {
+            byte[] word = new byte[4];
+            Array.Copy(input, start, word, 0, 4);
+            return BitConverter.ToUInt32(word, 0);
         }
     }
 }
