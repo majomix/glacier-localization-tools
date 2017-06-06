@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -14,7 +15,11 @@ namespace GlacierTextConverter
 
             foreach (string filePath in Directory.GetFiles(directory, "*", SearchOption.AllDirectories))
             {
-                Files.Add(new DatTextFile() { LanguageSections = LoadDatFile(filePath, specifications), Name = Path.GetFileName(filePath) });
+                try
+                {
+                    Files.Add(new DatTextFile() { LanguageSections = LoadDatFile(filePath, specifications), Name = Path.GetFileName(filePath) });
+                }
+                catch (Exception e) { Console.WriteLine(filePath); }
             }
         }
 

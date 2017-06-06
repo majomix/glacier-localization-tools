@@ -52,7 +52,7 @@ namespace GlacierTextConverter
             while (++zeroStrippedLength != input.Length && outputArray[zeroStrippedLength] != 0) ;
             byte[] zeroStrippedOutputArray = new byte[zeroStrippedLength];
             Array.Copy(outputArray, zeroStrippedOutputArray, zeroStrippedLength);
-            return new string(Encoding.GetEncoding(65001).GetChars(zeroStrippedOutputArray));
+            return new string(Encoding.UTF8.GetChars(zeroStrippedOutputArray));
         }
 
         private uint CreateWord(byte[] input, int start)
