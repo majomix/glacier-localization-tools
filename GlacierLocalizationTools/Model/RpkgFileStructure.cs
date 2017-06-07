@@ -1,0 +1,41 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GlacierLocalizationTools.Model
+{
+    public class RpkgFileStructure
+    {
+        private string mySignature;
+
+        public string Signature
+        {
+            get { return mySignature; }
+            set
+            {
+                if(value != "GKPR")
+                {
+                    throw new NotSupportedException();
+                }
+                else
+                {
+                    mySignature = value;
+                }
+            }
+        }
+        public uint NumberOfFiles { get; set; }
+        public uint ResourceTableOffset { get; set; }
+        public uint ResourceTableSize { get; set; }
+        public uint BaseVersionWord { get; set; }
+        public List<UInt64> PatchUnknownValues { get; private set; }
+        public List<RpkgEntry> Entries { get; private set; }
+
+        public RpkgFileStructure()
+        {
+            PatchUnknownValues = new List<UInt64>();
+            Entries = new List<RpkgEntry>();
+        }
+    }
+}

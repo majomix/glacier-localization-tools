@@ -67,6 +67,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Model\RpkgEditor.cs" />
+    <Compile Include="Model\RpkgEntry.cs" />
+    <Compile Include="Model\RpkgBinaryReader.cs" />
+    <Compile Include="Model\RpkgFileStructure.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

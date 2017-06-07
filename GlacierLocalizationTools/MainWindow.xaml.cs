@@ -23,6 +23,7 @@ namespace GlacierRpkgEditor
         public MainWindow()
         {
             InitializeComponent();
+
         }
     }
 }
