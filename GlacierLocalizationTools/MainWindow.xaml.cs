@@ -1,5 +1,7 @@
-﻿using System;
+﻿using GlacierLocalizationTools.Model;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,6 +26,22 @@ namespace GlacierRpkgEditor
         {
             InitializeComponent();
 
+            RpkgEditor editor = new RpkgEditor();
+            
+            using (FileStream fileStream = File.Open(@"F:\Hitman data\dlc0patch2.rpkg", FileMode.Open))
+            {
+                RpkgBinaryReader reader = new RpkgBinaryReader(1, fileStream);
+                editor.LoadRpgkFileStructure(reader);
+
+                for (int i = 0; i < editor.Archive.Entries.Count; i++ )
+                {
+                    try
+                    {
+                        editor.ExtractFile(@"F:\Hitman data\test", editor.Archive.Entries[i], reader);
+                    }
+                    catch (Exception e) { }
+                }
+            }
         }
     }
 }

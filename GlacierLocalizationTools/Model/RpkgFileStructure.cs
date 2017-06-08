@@ -32,6 +32,8 @@ namespace GlacierLocalizationTools.Model
         public List<UInt64> PatchUnknownValues { get; private set; }
         public List<RpkgEntry> Entries { get; private set; }
 
+        public byte[] EncryptionKey { get { return new byte[] { 0xDC, 0x45, 0xA6, 0x9C, 0xD3, 0x72, 0x4C, 0xAB }; } }
+
         public RpkgFileStructure()
         {
             PatchUnknownValues = new List<UInt64>();
