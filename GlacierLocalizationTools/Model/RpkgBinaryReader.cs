@@ -85,8 +85,12 @@ namespace GlacierLocalizationTools.Model
                 input[i] ^= encryptionKey[i % 8];
             }
 
-            ILZ4Decompressor a = LZ4Sharp.LZ4DecompressorFactory.CreateNew();
-            a.DecompressKnownSize(input, output, (int)decompressedSize);
+            int result = LZ4Handler.LZ4_decompress_safe(input, output, input.Length, (int)decompressedSize);
+
+            if(result != decompressedSize)
+            {
+                throw new ArgumentException();
+            }
 
             return output;
         }

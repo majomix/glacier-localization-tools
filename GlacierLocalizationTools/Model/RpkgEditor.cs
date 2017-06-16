@@ -38,14 +38,13 @@ namespace GlacierLocalizationTools.Model
             {
                 using (BinaryWriter writer = new BinaryWriter(fileStream))
                 {
-                    writer.Write(reader.ReadCompressedBytes(rpkgEntry.CompressedSize, rpkgEntry.Info.DecompressedDataSize));
                     if(rpkgEntry.IsCompressed)
                     {
-                        //writer.Write(reader.ReadBytes(rpkgEntry.CompressedSize));
+                        writer.Write(reader.ReadCompressedBytes(rpkgEntry.CompressedSize, rpkgEntry.Info.DecompressedDataSize));
                     }
                     else
                     {
-                        //writer.Write(reader.ReadBytes((int)rpkgEntry.Info.DecompressedDataSize));
+                        writer.Write(reader.ReadBytes((int)rpkgEntry.Info.DecompressedDataSize));
                     }
                 }
             }
