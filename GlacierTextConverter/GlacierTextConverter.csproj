@@ -41,19 +41,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CypherStrategyPermutation.cs" />
-    <Compile Include="CypherStrategyXXTEA.cs" />
-    <Compile Include="DatTextFile.cs" />
-    <Compile Include="FileVersionSpecificationsUpdate.cs" />
-    <Compile Include="FileVersionSpecificationsBase.cs" />
-    <Compile Include="GlacierBinaryReader.cs" />
-    <Compile Include="ICypherStrategy.cs" />
-    <Compile Include="IFileVersionSpecifications.cs" />
-    <Compile Include="LanguageSection.cs" />
+    <Compile Include="Model\CypherStrategyPermutation.cs" />
+    <Compile Include="Model\CypherStrategyXXTEA.cs" />
+    <Compile Include="Model\DatTextFile.cs" />
+    <Compile Include="Model\FileVersionSpecificationsUpdate.cs" />
+    <Compile Include="Model\FileVersionSpecificationsBase.cs" />
+    <Compile Include="Model\GlacierBinaryReader.cs" />
+    <Compile Include="Model\ICypherStrategy.cs" />
+    <Compile Include="Model\IFileVersionSpecifications.cs" />
+    <Compile Include="Model\LanguageSection.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TextConverter.cs" />
-    <Compile Include="TextEntry.cs" />
+    <Compile Include="Model\TextConverter.cs" />
+    <Compile Include="Model\TextEntry.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

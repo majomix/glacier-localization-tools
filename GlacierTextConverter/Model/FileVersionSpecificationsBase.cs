@@ -1,5 +1,5 @@
 ﻿
-namespace GlacierTextConverter
+namespace GlacierTextConverter.Model
 {
     public class FileVersionSpecificationsBase : IFileVersionSpecifications
     {

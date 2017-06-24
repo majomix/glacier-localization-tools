@@ -27,8 +27,8 @@ namespace GlacierRpkgEditor
             InitializeComponent();
 
             RpkgEditor editor = new RpkgEditor();
-            
-            using (FileStream fileStream = File.Open(@"F:\Hitman data\dlc0patch2.rpkg", FileMode.Open))
+
+            using (FileStream fileStream = File.Open(@"H:\Steam Games\steamapps\common\Hitman™\Runtime\chunk0patch1.rpkg", FileMode.Open))
             {
                 RpkgBinaryReader reader = new RpkgBinaryReader(1, fileStream);
                 editor.LoadRpgkFileStructure(reader);
@@ -37,7 +37,7 @@ namespace GlacierRpkgEditor
                 {
                     try
                     {
-                        editor.ExtractFile(@"F:\Hitman data\test", editor.Archive.Entries[i], reader);
+                        editor.ExtractFile(@"H:\Steam Games\steamapps\common\Hitman™\Runtime\c0p1", editor.Archive.Entries[i], reader);
                     }
                     catch (Exception e) { }
                 }

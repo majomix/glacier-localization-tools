@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Linq;
 
-namespace GlacierTextConverter
+namespace GlacierTextConverter.Model
 {
     public class TextConverter
     {
@@ -59,6 +60,59 @@ namespace GlacierTextConverter
             }
 
             return languageSections;
+        }
+
+        public void LoadTextFolder(string directory)
+        {
+            Files = new List<DatTextFile>();
+
+            foreach (var languagePair in GetLanguageMap())
+            {
+                using (FileStream fileStream = File.Open(directory + @"\" + languagePair.Value + ".txt", FileMode.Open))
+                {
+                    using (StreamReader reader = new StreamReader(fileStream, Encoding.UTF8))
+                    {
+                        string line = null;
+
+                        LanguageSection currentSection = null;
+
+                        while ((line = reader.ReadLine()) != null)
+                        {
+                            // new section
+                            if (line.StartsWith("[") && line.EndsWith("]"))
+                            {
+                                currentSection = new LanguageSection();
+
+                                string filename = line.Split('[', ']')[1];
+
+                                DatTextFile file = Files.Where(_ => _.Name == filename).SingleOrDefault();
+
+                                if (file == null)
+                                {
+                                    file = new DatTextFile() { Name = filename, LanguageSections = new List<LanguageSection>() };
+                                    Files.Add(file);
+                                }
+
+                                file.LanguageSections.Add(currentSection);
+                            }
+                            else if (currentSection != null)
+                            {
+                                string[] tokens = line.Split(new Char[] { '\t' }, 2);
+
+                                if (tokens.Count() == 2)
+                                {
+                                    TextEntry entry = new TextEntry()
+                                    {
+                                        Hash = Convert.ToUInt32(tokens[0], 16),
+                                        Entry = tokens[1]
+                                    };
+                                    currentSection.Entries.Add(entry);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         public void WriteTextFile(string directory)

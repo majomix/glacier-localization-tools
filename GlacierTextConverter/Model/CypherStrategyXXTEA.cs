@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GlacierTextConverter
+namespace GlacierTextConverter.Model
 {
     public class CypherStrategyXXTEA : ICypherStrategy
     {

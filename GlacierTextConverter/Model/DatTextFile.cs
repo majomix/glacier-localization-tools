@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace GlacierTextConverter
+namespace GlacierTextConverter.Model
 {
     public class DatTextFile
     {
