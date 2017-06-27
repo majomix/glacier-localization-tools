@@ -26,7 +26,16 @@ namespace GlacierTextConverter
             //converter.LoadDatFolder(@"D:\Hitman data\chunk0_LOCR\", new FileVersionSpecificationsBase());
             //converter.WriteTextFile(@"F:\Hitman data\chunk0_LOCR_txt\");
 
+            //converter.LoadDatFolder(@"F:\Hitman data\chunk0patch1_LOCR\", new FileVersionSpecificationsUpdate());
+            //var datFiles = converter.Files;
+            //converter.WriteTextFile(@"F:\Hitman data\chunk0patch1_LOCR_txt");
+            //var textFiles = converter.Files;
+
             converter.LoadTextFolder(@"F:\Hitman data\chunk0patch1_LOCR_txt");
+            converter.WriteDatFolder(@"F:\Hitman data\chunk0patch1_LOCR_txt_dat", new FileVersionSpecificationsUpdate());
+
+            //converter.LoadDatFolder(@"F:\Hitman data\chunk0patch1_LOCR_txt_dat\", new FileVersionSpecificationsUpdate());
+            //converter.WriteTextFile(@"F:\Hitman data\chunk0patch1_LOCR_txt_dat_txt");
         }
     }
 }

@@ -8,18 +8,25 @@ namespace GlacierTextConverter.Model
 {
     public class CypherStrategyPermutation : ICypherStrategy
     {
-        private int RunSymmetricCypher(byte value)
+        private int RunSymmetricKeyDecryption(byte value)
         {
             int[] bits = new int[] { value & 1, (value & 2) >> 1, (value & 4) >> 2, (value & 8) >> 3, (value & 16) >> 4, (value & 32) >> 5, (value & 64) >> 6, (value & 128) >> 7 };
             int output = (bits[0] << 0) | (bits[1] << 4) | (bits[2] << 1) | (bits[3] << 5) | (bits[4] << 2) | (bits[5] << 6) | (bits[6] << 3) | (bits[7] << 7);
             return output ^ 226;
         }
 
-        private int RunSymmetricCypher_AlternativeKeys(byte value)
+        private int RunSymmetricKeyDecryption_AlternativeKeys(byte value)
         {
             int[] bits = new int[] { value & 1, (value & 2) >> 1, (value & 4) >> 2, (value & 8) >> 3, (value & 16) >> 4, (value & 32) >> 5, (value & 64) >> 6, (value & 128) >> 7 };
             int output = (bits[0] << 0) | (bits[1] << 4) | (bits[2] << 1) | (bits[3] << 5) | (bits[4] << 2) | (bits[5] << 7) | (bits[6] << 3) | (bits[7] << 6);
             return output ^ 34;
+        }
+
+        private int RunSymmetricKeyEncryption(byte value)
+        {
+            value ^= 226;
+            int[] bits = new int[] { value & 1, (value & 2) >> 1, (value & 4) >> 2, (value & 8) >> 3, (value & 16) >> 4, (value & 32) >> 5, (value & 64) >> 6, (value & 128) >> 7 };
+            return (bits[0] << 0) | (bits[1] << 4) | (bits[2] << 1) | (bits[3] << 5) | (bits[4] << 2) | (bits[5] << 7) | (bits[6] << 3) | (bits[7] << 6);
         }
 
         public String Decypher(byte[] input)
@@ -28,7 +35,7 @@ namespace GlacierTextConverter.Model
             List<byte> outputBytes = new List<byte>();
             foreach (byte value in input)
             {
-                outputBytes.Add((byte) RunSymmetricCypher(value));
+                outputBytes.Add((byte)RunSymmetricKeyDecryption(value));
             }
             stringBuilder.Append(Encoding.UTF8.GetString(outputBytes.ToArray()));
             return stringBuilder.ToString();
@@ -79,6 +86,19 @@ namespace GlacierTextConverter.Model
                 }
             }
             Console.WriteLine("Done: " + DateTime.Now.ToString("h:mm:ss tt"));
+        }
+
+        public byte[] Cypher(string input)
+        {
+            List<byte> outputBytes = new List<byte>();
+            byte[] inputBytes = Encoding.UTF8.GetBytes(input);
+
+            foreach (byte value in inputBytes)
+            {
+                outputBytes.Add((byte)RunSymmetricKeyEncryption(value));
+            }
+
+            return outputBytes.ToArray();
         }
     }
 }

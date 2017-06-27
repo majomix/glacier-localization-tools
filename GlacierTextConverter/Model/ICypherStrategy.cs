@@ -8,6 +8,7 @@ namespace GlacierTextConverter.Model
 {
     public interface ICypherStrategy
     {
-        String Decypher(byte[] input);
+        string Decypher(byte[] input);
+        byte[] Cypher(string input);
     }
 }

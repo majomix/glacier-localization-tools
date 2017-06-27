@@ -148,6 +148,57 @@ namespace GlacierTextConverter.Model
             }
         }
 
+        public void WriteDatFolder(string directory, IFileVersionSpecifications specifications)
+        {
+            if (Files == null) return;
+
+            Directory.CreateDirectory(directory);
+
+            foreach(DatTextFile file in Files)
+            {
+                using (FileStream fileStream = File.Open(directory + @"\" + file.Name, FileMode.Create))
+                {
+                    using (GlacierBinaryWriter writer = new GlacierBinaryWriter(fileStream, Encoding.UTF8, specifications.CypherStrategy))
+                    {
+                        for (int i = 0; i < specifications.NumberOfLanguages; i++)
+                        {
+                            writer.Write((UInt32)0);
+                        }
+
+                        for (int i = 0; i < specifications.NumberOfLanguages; i++)
+                        {
+                            LanguageSection section = file.LanguageSections[i];
+                            
+                            if (section.Entries.Count != 0)
+                            {
+                                section.StartingOffset = (uint) writer.BaseStream.Position;
+
+                                writer.Write(section.Entries.Count);
+
+                                foreach (TextEntry entry in section.Entries)
+                                {
+                                    writer.Write(entry.Hash);
+                                    writer.Write(entry.Entry);
+                                }
+                            }
+                            else
+                            {
+                                section.StartingOffset = uint.MaxValue;
+                            }
+                        }
+
+                        writer.BaseStream.Seek(0, SeekOrigin.Begin);
+                        for (int i = 0; i < specifications.NumberOfLanguages; i++)
+                        {
+                            LanguageSection section = file.LanguageSections[i];
+
+                            writer.Write(section.StartingOffset);
+                        }
+                    }
+                }
+            }
+        }
+
         public Dictionary<int, string> GetLanguageMap()
         {
             return new Dictionary<int, string>()

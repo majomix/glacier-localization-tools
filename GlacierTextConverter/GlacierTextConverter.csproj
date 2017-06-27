@@ -47,6 +47,7 @@
     <Compile Include="Model\FileVersionSpecificationsUpdate.cs" />
     <Compile Include="Model\FileVersionSpecificationsBase.cs" />
     <Compile Include="Model\GlacierBinaryReader.cs" />
+    <Compile Include="Model\GlacierBinaryWriter.cs" />
     <Compile Include="Model\ICypherStrategy.cs" />
     <Compile Include="Model\IFileVersionSpecifications.cs" />
     <Compile Include="Model\LanguageSection.cs" />
