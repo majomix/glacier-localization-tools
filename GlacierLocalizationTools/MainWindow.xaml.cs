@@ -28,33 +28,51 @@ namespace GlacierRpkgEditor
 
             RpkgEditor editor = new RpkgEditor();
 
-            using (FileStream fileStream = File.Open(@"F:\Hitman data\dlc0patch1.rpkg", FileMode.Open))
+            using (FileStream fileStream = File.Open(@"F:\Hitman data\dlc0patch2.rpkg", FileMode.Open))
             {
                 RpkgBinaryReader reader = new RpkgBinaryReader(1, fileStream);
                 editor.LoadRpkgFileStructure(reader);
 
-                using (FileStream outputFileStream = File.Open(@"F:\Hitman data\dlc0patch1_out.rpkg", FileMode.Create))
+                ResolveNewFiles(@"F:\Hitman data\import", editor);
+
+                using (FileStream outputFileStream = File.Open(@"F:\Hitman data\dlc0patch2_out.rpkg", FileMode.Create))
                 {
                     using(RpkgBinaryWriter writer = new RpkgBinaryWriter(1, outputFileStream))
                     {
-                        editor.SaveRpkgFileStructure(writer);
+                        editor.SaveOriginalRpkgFileStructure(writer);
 
                         for (int i = 0; i < editor.Archive.Entries.Count; i++)
                         {
                             editor.SaveDataEntry(reader, writer, editor.Archive.Entries[i]);
                         }
+
+                        editor.UpdateSavedRpkgFileStructure(writer);
                     }
                 }
-                //editor.SaveRpkgFileStructure(writer);
 
                 //for (int i = 0; i < editor.Archive.Entries.Count; i++ )
                 //{
-                    //try
-                    //{
-                    //    editor.ExtractFile(@"H:\Steam Games\steamapps\common\Hitman™\Runtime\c0p1", editor.Archive.Entries[i], reader);
-                    //}
-                    //catch (Exception e) { }
+                    //  editor.ExtractFile(@"H:\Steam Games\steamapps\common\Hitman™\Runtime\c0p1", editor.Archive.Entries[i], reader);
                 //}
+            }
+        }
+
+        public void ResolveNewFiles(string directory, RpkgEditor Model)
+        {
+            foreach (string file in Directory.GetFiles(directory, "*", SearchOption.AllDirectories))
+            {
+                string[] tokens = file.Split(new string[] { directory + @"\" }, StringSplitOptions.RemoveEmptyEntries);
+                if (!String.IsNullOrWhiteSpace(tokens[0]))
+                {
+                    string[] filepath = tokens[0].Split('\\');
+                    RpkgEntry currentEntry = Model.Archive.Entries.SingleOrDefault(_ => _.Info.Signature == filepath[0] && _.Hash == Convert.ToUInt64(filepath[1].Split(new string[] { ".dat" }, StringSplitOptions.None)[0], 16));
+
+                    if (currentEntry != null)
+                    {
+                        currentEntry.Import = file;
+                        currentEntry.Info.DecompressedDataSize = (uint)new FileInfo(file).Length;
+                    }
+                }
             }
         }
     }

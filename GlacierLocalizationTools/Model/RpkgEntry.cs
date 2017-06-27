@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GlacierLocalizationTools.Model
 {
@@ -22,8 +18,8 @@ namespace GlacierLocalizationTools.Model
             }
             set
             {
-                IsEncrypted = (value & 0x80000000) == 1;
-                IsUnknownFlag = (value & 0x40000000) == 1;
+                IsEncrypted = (value & 0x80000000) == 0x80000000;
+                IsUnknownFlag = (value & 0x40000000) == 0x40000000;
                 CompressedSize = (Int32)(value & 0x3FFFFFFF);
                 IsCompressed = CompressedSize != 0;
             }
