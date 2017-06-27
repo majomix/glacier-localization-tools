@@ -28,19 +28,33 @@ namespace GlacierRpkgEditor
 
             RpkgEditor editor = new RpkgEditor();
 
-            using (FileStream fileStream = File.Open(@"H:\Steam Games\steamapps\common\Hitman™\Runtime\chunk0patch1.rpkg", FileMode.Open))
+            using (FileStream fileStream = File.Open(@"F:\Hitman data\dlc0patch1.rpkg", FileMode.Open))
             {
                 RpkgBinaryReader reader = new RpkgBinaryReader(1, fileStream);
-                editor.LoadRpgkFileStructure(reader);
+                editor.LoadRpkgFileStructure(reader);
 
-                for (int i = 0; i < editor.Archive.Entries.Count; i++ )
+                using (FileStream outputFileStream = File.Open(@"F:\Hitman data\dlc0patch1_out.rpkg", FileMode.Create))
                 {
-                    try
+                    using(RpkgBinaryWriter writer = new RpkgBinaryWriter(1, outputFileStream))
                     {
-                        editor.ExtractFile(@"H:\Steam Games\steamapps\common\Hitman™\Runtime\c0p1", editor.Archive.Entries[i], reader);
+                        editor.SaveRpkgFileStructure(writer);
+
+                        for (int i = 0; i < editor.Archive.Entries.Count; i++)
+                        {
+                            editor.SaveDataEntry(reader, writer, editor.Archive.Entries[i]);
+                        }
                     }
-                    catch (Exception e) { }
                 }
+                //editor.SaveRpkgFileStructure(writer);
+
+                //for (int i = 0; i < editor.Archive.Entries.Count; i++ )
+                //{
+                    //try
+                    //{
+                    //    editor.ExtractFile(@"H:\Steam Games\steamapps\common\Hitman™\Runtime\c0p1", editor.Archive.Entries[i], reader);
+                    //}
+                    //catch (Exception e) { }
+                //}
             }
         }
     }

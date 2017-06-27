@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IO;
 
 namespace GlacierLocalizationTools.Model
 {
@@ -11,7 +6,7 @@ namespace GlacierLocalizationTools.Model
     {
         public RpkgFileStructure Archive { get; private set; }
 
-        public void LoadRpgkFileStructure(RpkgBinaryReader reader)
+        public void LoadRpkgFileStructure(RpkgBinaryReader reader)
         {
             Archive = reader.ReadHeader();
             
@@ -46,6 +41,46 @@ namespace GlacierLocalizationTools.Model
                     {
                         writer.Write(reader.ReadBytes((int)rpkgEntry.Info.DecompressedDataSize));
                     }
+                }
+            }
+        }
+
+        public void SaveRpkgFileStructure(RpkgBinaryWriter writer)
+        {
+            writer.Write(Archive);
+
+            for (int i = 0; i < Archive.NumberOfFiles; i++)
+            {
+                writer.Write(Archive.Entries[i]);
+            }
+
+            for (int i = 0; i < Archive.NumberOfFiles; i++)
+            {
+                writer.Write(Archive.Entries[i].Info);
+            }
+        }
+
+        public void SaveDataEntry(RpkgBinaryReader reader, RpkgBinaryWriter writer, RpkgEntry rpkgEntry)
+        {
+            if(rpkgEntry.Import != null)
+            {
+                using (FileStream importFileStream = File.Open(rpkgEntry.Import, FileMode.Open))
+                {
+                    BinaryReader importReader = new BinaryReader(importFileStream);
+                    writer.WriteCompressedBytes(importReader.ReadBytes((int)rpkgEntry.Info.DecompressedDataSize));
+                }
+            }
+            else
+            {
+                if (reader.BaseStream.Position != (long)rpkgEntry.Offset) reader.BaseStream.Seek((long)rpkgEntry.Offset, SeekOrigin.Begin);
+
+                if (rpkgEntry.IsCompressed)
+                {
+                    writer.Write(reader.ReadBytes((int)rpkgEntry.CompressedSize));
+                }
+                else
+                {
+                    writer.Write(reader.ReadBytes((int)rpkgEntry.Info.DecompressedDataSize));
                 }
             }
         }

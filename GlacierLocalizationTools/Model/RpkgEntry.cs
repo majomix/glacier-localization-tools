@@ -34,5 +34,8 @@ namespace GlacierLocalizationTools.Model
         public bool IsUnknownFlag { get; set; }
         public bool IsCompressed { get; set; }
         public Int32 CompressedSize { get; set; }
+
+        public bool Extract { get; set; }
+        public string Import { get; set; }
     }
 }

@@ -68,6 +68,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Model\LZ4Handler.cs" />
+    <Compile Include="Model\RpkgBinaryWriter.cs" />
     <Compile Include="Model\RpkgEditor.cs" />
     <Compile Include="Model\RpkgEntry.cs" />
     <Compile Include="Model\RpkgBinaryReader.cs" />
