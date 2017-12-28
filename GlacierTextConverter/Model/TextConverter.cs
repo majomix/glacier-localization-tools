@@ -19,6 +19,7 @@ namespace GlacierTextConverter.Model
                 try
                 {
                     Files.Add(new DatTextFile() { LanguageSections = LoadDatFile(filePath, specifications), Name = Path.GetFileName(filePath) });
+                    break;
                 }
                 catch (Exception e) { Console.WriteLine(filePath); }
             }
@@ -52,10 +53,11 @@ namespace GlacierTextConverter.Model
                             TextEntry entry = new TextEntry();
                             entry.Hash = reader.ReadUInt32();
                             entry.Entry = reader.ReadString();
-
+                            break;
                             section.Entries.Add(entry);
                         }
                     }
+                    break;
                 }
             }
 

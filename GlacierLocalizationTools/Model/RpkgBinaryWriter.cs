@@ -70,7 +70,7 @@ namespace GlacierLocalizationTools.Model
 
             for (int i = 0; i < compressedSize; i++)
             {
-                input[i] ^= encryptionKey[i % 8];
+                outputBuffer[i] ^= encryptionKey[i % 8];
             }
 
             Write(outputBuffer, 0, compressedSize);
