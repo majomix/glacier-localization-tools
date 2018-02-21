@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace GlacierTextConverter.Model
 {
-    public class CypherStrategyXXTEA : ICypherStrategy
+    public class CypherStrategyTEA : ICypherStrategy
     {
         private void RunSymmetricKeyDecryption(uint firstWord, uint secondWord, BinaryWriter binaryWriter)
         {

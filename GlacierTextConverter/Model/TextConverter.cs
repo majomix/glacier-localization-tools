@@ -80,7 +80,7 @@ namespace GlacierTextConverter.Model
             using (GlacierDlgeBinaryReader reader = new GlacierDlgeBinaryReader(File.Open(path, FileMode.Open), Encoding.Unicode))
             {
                 int numberOfLanguages = 12;
-                ICypherStrategy cypherStrategy = new CypherStrategyXXTEA();
+                ICypherStrategy cypherStrategy = new CypherStrategyTEA();
 
                 structure = reader.ReadStructure();
                 int nonEmptyStrings = 0;

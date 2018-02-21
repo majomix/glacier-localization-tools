@@ -68,7 +68,7 @@
     <Compile Include="Model\GlacierDlgeBinaryReader.cs" />
     <Compile Include="Model\DlgeTextFile.cs" />
     <Compile Include="Model\CypherStrategyPermutation.cs" />
-    <Compile Include="Model\CypherStrategyXXTEA.cs" />
+    <Compile Include="Model\CypherStrategyTEA.cs" />
     <Compile Include="Model\LocrTextFile.cs" />
     <Compile Include="Model\GlacierLocrBinaryReader.cs" />
     <Compile Include="Model\GlacierBinaryWriter.cs" />

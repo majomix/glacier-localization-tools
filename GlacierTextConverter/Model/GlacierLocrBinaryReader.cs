@@ -26,7 +26,7 @@ namespace GlacierTextConverter.Model
             string decyphered = CypherStrategy.Decypher(bytes);
             if(IsUsingIncorrectStrategy(bytes, decyphered))
             {
-                CypherStrategy = new CypherStrategyXXTEA();
+                CypherStrategy = new CypherStrategyTEA();
                 decyphered = CypherStrategy.Decypher(bytes);
             }
             return decyphered;
@@ -40,7 +40,7 @@ namespace GlacierTextConverter.Model
                     CypherStrategy = new CypherStrategyPermutation();
                     break;
                 case 12:
-                    CypherStrategy = new CypherStrategyXXTEA();
+                    CypherStrategy = new CypherStrategyTEA();
                     break;
                 default:
                     throw new InvalidDataException("Unsupported number of languages");
