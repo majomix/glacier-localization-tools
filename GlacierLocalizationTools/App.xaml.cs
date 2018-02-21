@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using GlacierLocalizationTools.View;
+using System;
 using System.Windows;
 
 namespace GlacierRpkgEditor
@@ -13,5 +9,16 @@ namespace GlacierRpkgEditor
     /// </summary>
     public partial class App : Application
     {
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            base.OnStartup(e);
+
+            if (Environment.GetCommandLineArgs().Length > 1)
+            {
+                OneTimeRunWindow oneTimeRunWindow = new OneTimeRunWindow();
+                MainWindow = oneTimeRunWindow;
+                MainWindow.Show();
+            }
+        }
     }
 }
