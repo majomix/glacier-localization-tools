@@ -1,12 +1,7 @@
 ﻿using GlacierTextConverter.Model;
+using NDesk.Options;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace GlacierTextConverter
 {
@@ -14,28 +9,22 @@ namespace GlacierTextConverter
     {
         static void Main(string[] args)
         {
+            bool export = true;
+            string directory = Directory.GetCurrentDirectory();
+
+            OptionSet options = new OptionSet()
+            .Add("import", value => export = false)
+            .Add("dir=", value => directory = value);
+
+            options.Parse(Environment.GetCommandLineArgs());
+
             TextConverter converter = new TextConverter();
-            //converter.LoadTextFile(@"D:\Hitman data\chunk0_LOCR\0000000000001c7a.dat", new FileVersionSpecificationsBase());
-            //converter.LoadDatFile(@"D:\Hitman data\chunk0patch1_LOCR\0000000000000a3a.dat", new FileVersionSpecificationsUpdate());
-            //converter.LoadDatFolder(@"D:\Hitman data\chunk0patch1_LOCR\", new FileVersionSpecificationsUpdate());
-            //converter.WriteTextFile(@"F:\Hitman data\chunk0patch1_LOCR_txt\");
-            //converter.LoadDatFolder(@"D:\Hitman data\dl0patch1patch_LOCR\", new FileVersionSpecificationsUpdate());
-            //converter.WriteTextFile(@"F:\Hitman data\dl0patch1patch_LOCR_txt\");
-            //converter.LoadDatFolder(@"D:\Hitman data\dlc0_LOCR\", new FileVersionSpecificationsBase());
-            //converter.WriteTextFile(@"F:\Hitman data\dlc0_LOCR_txt\");
-            //converter.LoadDatFolder(@"D:\Hitman data\chunk0_LOCR\", new FileVersionSpecificationsBase());
-            //converter.WriteTextFile(@"F:\Hitman data\chunk0_LOCR_txt\");
 
-            //converter.LoadDatFolder(@"F:\Hitman data\chunk0patch1_LOCR\", new FileVersionSpecificationsUpdate());
-            //var datFiles = converter.Files;
-            //converter.WriteTextFile(@"F:\Hitman data\chunk0patch1_LOCR_txt");
-            //var textFiles = converter.Files;
-
-            converter.LoadTextFolder(@"F:\Hitman data\chunk0patch1_LOCR_txt");
-            converter.WriteDatFolder(@"F:\Hitman data\chunk0patch1_LOCR_txt_dat", new FileVersionSpecificationsUpdate());
-
-            //converter.LoadDatFolder(@"F:\Hitman data\chunk0patch1_LOCR_txt_dat\", new FileVersionSpecificationsUpdate());
-            //converter.WriteTextFile(@"F:\Hitman data\chunk0patch1_LOCR_txt_dat_txt");
+            converter.LoadLocrFolder(directory + @"\RCOL");
+            converter.LoadDlgeFolder(directory + @"\EGLD");
+            //converter.WriteCombinedTextFile(directory);
+            converter.LoadTextFolder(directory);
+            converter.WriteDatFolder(directory + @"\LOCR");
         }
     }
 }

@@ -2,9 +2,10 @@
 
 namespace GlacierTextConverter.Model
 {
-    public class DatTextFile
+    public class LocrTextFile
     {
         public string Name { get; set; }
         public List<LanguageSection> LanguageSections { get; set; }
+        public ICypherStrategy CypherStrategy { get; set; }
     }
 }
