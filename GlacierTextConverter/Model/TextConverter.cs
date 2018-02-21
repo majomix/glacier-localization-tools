@@ -171,6 +171,8 @@ namespace GlacierTextConverter.Model
             {
                 using (GlacierBinaryWriter writer = new GlacierBinaryWriter(File.Open(directory + @"\" + file.Name, FileMode.Create), Encoding.UTF8, file.CypherStrategy))
                 {
+                    bool isEmpty = file.LanguageSections.All(section => section.Entries.Count == 0);
+
                     foreach (var section in file.LanguageSections)
                     {
                         writer.Write((UInt32)0);
@@ -178,9 +180,9 @@ namespace GlacierTextConverter.Model
 
                     foreach (LanguageSection section in file.LanguageSections)
                     {
-                        if (section.Entries.Count != 0)
+                        if (section.Entries.Count != 0 || isEmpty)
                         {
-                            section.StartingOffset = (uint) writer.BaseStream.Position;
+                            section.StartingOffset = (uint)writer.BaseStream.Position;
 
                             writer.Write(section.Entries.Count);
 
