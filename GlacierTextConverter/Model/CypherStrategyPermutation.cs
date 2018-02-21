@@ -25,8 +25,7 @@ namespace GlacierTextConverter.Model
         private int RunSymmetricKeyEncryption(byte value)
         {
             value ^= 226;
-            int[] bits = new int[] { value & 1, (value & 2) >> 1, (value & 4) >> 2, (value & 8) >> 3, (value & 16) >> 4, (value & 32) >> 5, (value & 64) >> 6, (value & 128) >> 7 };
-            return (bits[0] << 0) | (bits[1] << 4) | (bits[2] << 1) | (bits[3] << 5) | (bits[4] << 2) | (bits[5] << 7) | (bits[6] << 3) | (bits[7] << 6);
+            return (value & 0x81) | (value & 2) << 1 | (value & 4) << 2 | (value & 8) << 3 | (value & 0x10) >> 3 | (value & 0x20) >> 2 | (value & 0x40) >> 1;
         }
 
         public String Decypher(byte[] input)
