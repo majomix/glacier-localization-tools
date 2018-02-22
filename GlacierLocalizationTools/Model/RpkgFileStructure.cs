@@ -25,7 +25,7 @@ namespace GlacierLocalizationTools.Model
         public uint NumberOfFiles { get; set; }
         public uint ResourceTableOffset { get; set; }
         public uint ResourceTableSize { get; set; }
-        public uint BaseVersionWord { get; set; }
+        public bool BaseVersionZero { get; set; }
         public List<UInt64> PatchUnknownValues { get; private set; }
         public List<RpkgEntry> Entries { get; private set; }
 

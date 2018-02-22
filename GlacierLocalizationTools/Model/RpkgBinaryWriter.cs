@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace GlacierLocalizationTools.Model
@@ -27,9 +28,9 @@ namespace GlacierLocalizationTools.Model
 
             if (myVersion == 0)
             {
-                if (header.BaseVersionWord != 0)
+                if (header.BaseVersionZero)
                 {
-                    Write(header.BaseVersionWord);
+                    Write((UInt32)0);
                 }
             }
             else if (myVersion == 1)

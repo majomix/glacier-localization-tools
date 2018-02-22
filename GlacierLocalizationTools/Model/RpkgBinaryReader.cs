@@ -24,8 +24,12 @@ namespace GlacierLocalizationTools.Model
 
             if (myVersion == 0)
             {
-                rpkgFile.BaseVersionWord = ReadUInt32();
-                if(rpkgFile.BaseVersionWord != 0)
+                UInt32 zero = ReadUInt32();
+                if (zero == 0)
+                {
+                    rpkgFile.BaseVersionZero = true;
+                }
+                else
                 {
                     BaseStream.Seek(-4, SeekOrigin.Current);
                 }
