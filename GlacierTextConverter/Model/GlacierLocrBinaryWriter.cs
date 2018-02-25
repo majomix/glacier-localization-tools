@@ -1,13 +1,14 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace GlacierTextConverter.Model
 {
-    public class GlacierBinaryWriter : BinaryWriter
+    public class GlacierLocrBinaryWriter : BinaryWriter
     {
         private ICypherStrategy myStrategy;
 
-        public GlacierBinaryWriter(FileStream fileStream, Encoding encoding, ICypherStrategy cypherStrategy)
+        public GlacierLocrBinaryWriter(FileStream fileStream, Encoding encoding, ICypherStrategy cypherStrategy)
             : base(fileStream, encoding)
         {
             myStrategy = cypherStrategy;

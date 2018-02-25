@@ -107,6 +107,8 @@ namespace GlacierTextConverter.Model
                 {
                     throw new InvalidDataException("No text inside dialogue file.");
                 }
+
+                structure.Extra = reader.ReadBytes((int)(reader.BaseStream.Length - reader.BaseStream.Position));
             }
 
             return structure;
@@ -161,7 +163,7 @@ namespace GlacierTextConverter.Model
             }
         }
 
-        public void WriteDatFolder(string directory)
+        public void WriteLocrFolder(string directory)
         {
             if (LocrFiles == null) return;
 
@@ -169,7 +171,7 @@ namespace GlacierTextConverter.Model
 
             foreach(LocrTextFile file in LocrFiles)
             {
-                using (GlacierBinaryWriter writer = new GlacierBinaryWriter(File.Open(directory + @"\" + file.Name, FileMode.Create), Encoding.UTF8, file.CypherStrategy))
+                using (GlacierLocrBinaryWriter writer = new GlacierLocrBinaryWriter(File.Open(directory + @"\" + file.Name, FileMode.Create), Encoding.UTF8, file.CypherStrategy))
                 {
                     bool isEmpty = file.LanguageSections.All(section => section.Entries.Count == 0);
 
@@ -188,10 +190,8 @@ namespace GlacierTextConverter.Model
 
                             foreach (TextEntry entry in section.Entries)
                             {
-                                string finalString = Replacement.ContainsKey(entry.Hash) ? Replacement[entry.Hash] : entry.Entry;
-
                                 writer.Write(entry.Hash);
-                                writer.Write(finalString.Replace("\\n", "\r\n"));
+                                writer.Write(GetReplacementString(entry.Entry, entry.Hash, file.LanguageSections[GetLanguageMap()["English"].Item1] == section));
                             }
                         }
                         else
@@ -205,6 +205,33 @@ namespace GlacierTextConverter.Model
                     {
                         writer.Write(section.StartingOffset);
                     }
+                }
+            }
+        }
+
+        public void WriteDlgeFolder(string directory)
+        {
+            if (DlgeFiles == null) return;
+
+            Directory.CreateDirectory(directory);
+
+            foreach (DlgeTextFile file in DlgeFiles)
+            {
+                using (GlacierDlgeBinaryWriter writer = new GlacierDlgeBinaryWriter(File.Open(directory + @"\" + file.Name, FileMode.Create), Encoding.UTF8))
+                {
+                    writer.Write(file.Structure);
+
+                    for (int i = 0; i < file.Structure.Dialogues.Length; i++)
+                    {
+                        string finalString = GetReplacementString(file.Structure.Dialogues[i], file.Structure.Identifier, GetLanguageMap()["English"].Item2 == i);
+                        writer.Write(finalString);
+                        if (finalString != null && i != file.Structure.Dialogues.Length - 1)
+                        {
+                            writer.WriteTrailingBytes(i);
+                        }
+                    }
+
+                    writer.Write(file.Structure.Extra);
                 }
             }
         }
@@ -242,6 +269,20 @@ namespace GlacierTextConverter.Model
                     Console.WriteLine(filePath);
                 }
             }
+        }
+
+        private string GetReplacementString(string entry, UInt32 hash, bool extraCondition)
+        {
+            if (entry == null) return entry;
+
+            string finalString = entry;
+
+            if (extraCondition && Replacement.ContainsKey(hash))
+            {
+                finalString = Replacement[hash];
+            }
+
+            return finalString.Replace("\\n", "\r\n");
         }
     }
 }
