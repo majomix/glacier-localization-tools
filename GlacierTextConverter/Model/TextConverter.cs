@@ -96,7 +96,7 @@ namespace GlacierTextConverter.Model
 
                     if (i != numberOfLanguages - 1)
                     {
-                        if(reader.ReadLanguageMetadataAndDetermineIfEmpty())
+                        if (reader.ReadLanguageMetadataAndDetermineIfEmpty(i))
                         {
                             i++;
                         }

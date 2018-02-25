@@ -19,29 +19,23 @@ namespace GlacierTextConverter
             return cypherStrategy.Decypher(bytes);
         }
 
-        public bool ReadLanguageMetadataAndDetermineIfEmpty()
+        public bool ReadLanguageMetadataAndDetermineIfEmpty(int i)
         {
             ConfirmEquality(ReadInt32(), 0);
 
-            int following = ReadInt32();
-
-            try
+            if(i == 9)
             {
-                ConfirmEquality(following, -1);
+                ConfirmEquality(ReadInt32(), 4);
+                ConfirmEquality(ReadInt32(), 5);
+
+                return true;
+            }
+            else
+            {
+                ConfirmEquality(ReadInt32(), -1);
                 ConfirmEquality(ReadInt32(), -1);
 
                 return false;
-            }
-            catch
-            {
-                try
-                {
-                    ConfirmEquality(following, 4);
-                    ConfirmEquality(ReadInt32(), 5);
-
-                    return true;
-                }
-                catch (Exception e) { throw e; }
             }
         }
 
