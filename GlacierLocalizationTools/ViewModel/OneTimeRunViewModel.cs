@@ -14,6 +14,7 @@ namespace GlacierLocalizationTools.ViewModel
         private string myTargetDirectory;
         public bool? Export { get; set; }
         public bool TextsOnly { get; set; }
+        public bool Repack { get; set; }
         public ICommand ExtractByParameterCommand { get; private set; }
         public ICommand ImportByParameterCommand { get; private set; }
 
@@ -32,8 +33,9 @@ namespace GlacierLocalizationTools.ViewModel
                 .Add("export", value => Export = true)
                 .Add("import", value => Export = false)
                 .Add("runtime=", value => mySourceDirectory = CreateFullPath(value, true))
-                .Add("output=", value => myTargetDirectory = CreateFullPath(value, true))
-                .Add("textsonly", value => TextsOnly = true);
+                .Add("userdata=", value => myTargetDirectory = CreateFullPath(value, true))
+                .Add("textsonly", value => TextsOnly = true)
+                .Add("repack", value => Repack = true);
 
             options.Parse(Environment.GetCommandLineArgs());
         }

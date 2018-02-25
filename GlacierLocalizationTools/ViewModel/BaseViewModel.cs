@@ -154,6 +154,28 @@ namespace GlacierLocalizationTools.ViewModel
             OnPropertyChanged("Model");
         }
 
+        public void SaveStructureByAppend()
+        {
+            using (RpkgBinaryWriter writer = new RpkgBinaryWriter(GetRpkgVersion(LoadedFilePath), File.Open(LoadedFilePath, FileMode.Open, FileAccess.ReadWrite)))
+            {
+                long currentSize = 0;
+                var entries = Model.Archive.Entries.Where(_ => _.Import != null).ToList();
+                long totalSize = entries.Sum(_ => _.CompressedSize);
+
+                foreach (RpkgEntry entry in entries)
+                {
+                    Model.AppendDataEntry(writer, entry);
+                    CurrentProgress = (int)(currentSize * 100.0 / totalSize);
+                    CurrentFile = entry.Hash.ToString();
+                    currentSize += entry.CompressedSize;
+                }
+
+                Model.UpdateSavedRpkgFileStructure(writer);
+            }
+
+            OnPropertyChanged("Model");
+        }
+
         public string GenerateRandomName()
         {
             Random generator = new Random();

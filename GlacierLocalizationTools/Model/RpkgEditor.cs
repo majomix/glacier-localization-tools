@@ -73,25 +73,35 @@ namespace GlacierLocalizationTools.Model
 
             if(rpkgEntry.Import != null)
             {
-                using (FileStream importFileStream = File.Open(rpkgEntry.Import, FileMode.Open))
-                {
-                    BinaryReader importReader = new BinaryReader(importFileStream);
-
-                    if (rpkgEntry.IsCompressed)
-                    {
-                        rpkgEntry.CompressedSize = writer.WriteCompressedBytes(importReader.ReadBytes((int)rpkgEntry.Info.DecompressedDataSize));
-                    }
-                    else
-                    {
-                        writer.Write(importReader.ReadBytes((int)rpkgEntry.Info.DecompressedDataSize));
-                    }
-                }
+                ImportNewFile(writer, rpkgEntry);
             }
             else
             {
                 if (reader.BaseStream.Position != originalOffset) reader.BaseStream.Seek(originalOffset, SeekOrigin.Begin);
                 int size = rpkgEntry.IsCompressed ? (int)rpkgEntry.CompressedSize : (int)rpkgEntry.Info.DecompressedDataSize;
                 writer.Write(reader.ReadBytes(size));
+            }
+        }
+
+        public void AppendDataEntry(RpkgBinaryWriter writer, RpkgEntry rpkgEntry)
+        {
+            writer.BaseStream.Seek(0, SeekOrigin.End);
+            rpkgEntry.Offset = (ulong)writer.BaseStream.Position;
+            ImportNewFile(writer, rpkgEntry);
+        }
+
+        private void ImportNewFile(RpkgBinaryWriter writer, RpkgEntry rpkgEntry)
+        {
+            using (BinaryReader importReader = new BinaryReader(File.Open(rpkgEntry.Import, FileMode.Open)))
+            {
+                if (rpkgEntry.IsCompressed)
+                {
+                    rpkgEntry.CompressedSize = writer.WriteCompressedBytes(importReader.ReadBytes((int)rpkgEntry.Info.DecompressedDataSize));
+                }
+                else
+                {
+                    writer.Write(importReader.ReadBytes((int)rpkgEntry.Info.DecompressedDataSize));
+                }
             }
         }
     }
