@@ -22,9 +22,17 @@ namespace GlacierTextConverter
 
             converter.LoadLocrFolder(directory + @"\RCOL");
             converter.LoadDlgeFolder(directory + @"\EGLD");
-            //converter.WriteCombinedTextFile(directory);
-            converter.LoadTextFolder(directory);
-            converter.WriteDatFolder(directory + @"\LOCR");
+
+            if(export)
+            {
+                converter.WriteCombinedTextFile(directory);
+            }
+            else
+            {
+                converter.LoadTextFolder(directory);
+                converter.WriteLocrFolder(directory + @"\RCOL");
+                converter.WriteDlgeFolder(directory + @"\EGLD");
+            }
         }
     }
 }
