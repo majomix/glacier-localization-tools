@@ -110,18 +110,49 @@ namespace GlacierLocalizationTools.ViewModel
 
         public void ResolveNewFiles(string directory)
         {
-            foreach (string file in Directory.GetFiles(directory, "*", SearchOption.AllDirectories))
+            string[] infoNames = new string[] { "EGLD", "RCOL" };
+            Dictionary<string, Dictionary<UInt64, RpkgEntry>> fileMap = new Dictionary<string, Dictionary<ulong, RpkgEntry>>();
+
+            foreach(string infoName in infoNames)
             {
+                fileMap[infoName] = new Dictionary<UInt64, RpkgEntry>();
+            }
+
+            foreach(RpkgEntry entry in Model.Archive.Entries)
+            {
+                if (infoNames.Contains(entry.Info.Signature))
+                {
+                    fileMap[entry.Info.Signature][entry.Hash] = entry;
+                }
+            }
+
+            string[] fileList = Directory.GetFiles(directory, "*", SearchOption.AllDirectories);
+            foreach (string file in fileList)
+            {
+                string sufix = Path.GetFileNameWithoutExtension(LoadedFilePath);
+                string specificFile = file + @"_" + sufix;
+                if (fileList.Contains(specificFile) || (file.Contains("_") && !file.EndsWith(sufix)))
+                {
+                    continue;
+                }
+
                 string[] tokens = file.Split(new string[] { directory + @"\" }, StringSplitOptions.RemoveEmptyEntries);
                 if (!String.IsNullOrWhiteSpace(tokens[0]))
                 {
                     string[] filepath = tokens[0].Split('\\');
-                    RpkgEntry currentEntry = Model.Archive.Entries.SingleOrDefault(_ => _.Info.Signature == filepath[0] && _.Hash == Convert.ToUInt64(filepath[1].Split(new string[] { ".dat" }, StringSplitOptions.None)[0], 16));
-
-                    if (currentEntry != null)
+                    if (fileMap.ContainsKey(filepath[0]))
                     {
-                        currentEntry.Import = file;
-                        currentEntry.Info.DecompressedDataSize = (uint)new FileInfo(file).Length;
+                        UInt64 hash = Convert.ToUInt64(filepath[1].Split(new string[] { ".dat" }, StringSplitOptions.None)[0], 16);
+                        if(fileMap[filepath[0]].ContainsKey(hash))
+                        {
+                            RpkgEntry currentEntry = fileMap[filepath[0]][hash];
+
+                            if (currentEntry != null)
+                            {
+                                currentEntry.Import = file;
+                                currentEntry.Info.DecompressedDataSize = (uint)new FileInfo(file).Length;
+                            }
+                        }
                     }
                 }
             }

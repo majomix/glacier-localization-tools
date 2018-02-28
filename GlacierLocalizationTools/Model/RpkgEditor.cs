@@ -29,6 +29,11 @@ namespace GlacierLocalizationTools.Model
 
             Directory.CreateDirectory(Path.GetDirectoryName(compoundName));
 
+            if (File.Exists(compoundName))
+            {
+                compoundName += @"_" + Path.GetFileNameWithoutExtension(((FileStream)reader.BaseStream).Name);
+            }
+
             using (FileStream fileStream = File.Open(compoundName, FileMode.Create))
             {
                 using (BinaryWriter writer = new BinaryWriter(fileStream))
