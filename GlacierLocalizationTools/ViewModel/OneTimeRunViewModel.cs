@@ -62,16 +62,27 @@ namespace GlacierLocalizationTools.ViewModel
 
         public void Import()
         {
-            if (myTargetDirectory != null && Directory.Exists(myTargetDirectory) && LoadedFilePath != null)
+            if (myTargetDirectory != null && Directory.Exists(myTargetDirectory))
             {
-                LoadStructure();
-                ResolveNewFiles(myTargetDirectory);
+                foreach (string file in Directory.GetFiles(mySourceDirectory, "*.rpkg"))
+                {
+                    LoadedFilePath = file;
+                    LoadStructure();
+                    ResolveNewFiles(myTargetDirectory);
 
-                string randomName = LoadedFilePath + "_tmp" + new Random().Next().ToString();
-                SaveStructure(randomName);
+                    if (Repack)
+                    {
+                        string randomName = LoadedFilePath + "_tmp" + new Random().Next().ToString();
+                        SaveStructureByRepack(randomName);
 
-                File.Delete(LoadedFilePath);
-                File.Move(randomName, LoadedFilePath);
+                        File.Delete(LoadedFilePath);
+                        File.Move(randomName, LoadedFilePath);
+                    }
+                    else
+                    {
+                        SaveStructureByAppend();
+                    }
+                }
             }
         }
 

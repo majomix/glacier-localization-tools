@@ -159,7 +159,7 @@ namespace GlacierLocalizationTools.ViewModel
         }
 
 
-        public void SaveStructure(string path)
+        public void SaveStructureByRepack(string path)
         {
             using (RpkgBinaryReader reader = new RpkgBinaryReader(GetRpkgVersion(LoadedFilePath), File.Open(LoadedFilePath, FileMode.Open)))
             {
