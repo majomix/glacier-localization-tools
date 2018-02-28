@@ -9,7 +9,7 @@ namespace GlacierLocalizationTools.ViewModel
 {
     internal abstract class BaseViewModel : INotifyPropertyChanged
     {
-        private int myCurrentProgress = 100;
+        private int myCurrentProgress;
         private string myLoadedFilePath;
         private string myCurrentFile;
         private bool myHasError;
@@ -167,11 +167,11 @@ namespace GlacierLocalizationTools.ViewModel
                 {
                     Model.SaveOriginalRpkgFileStructure(writer);
 
+                    long currentSize = 0;
+                    long totalSize = Model.Archive.Entries.Sum(_ => _.CompressedSize);
+
                     foreach (RpkgEntry entry in Model.Archive.Entries)
                     {
-                        long currentSize = 0;
-                        long totalSize = Model.Archive.Entries.Sum(_ => _.CompressedSize);
-
                         Model.SaveDataEntry(reader, writer, entry);
                         CurrentProgress = (int)(currentSize * 100.0 / totalSize);
                         CurrentFile = entry.Hash.ToString();

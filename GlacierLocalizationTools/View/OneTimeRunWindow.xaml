@@ -1,12 +1,12 @@
 ﻿<Window x:Class="GlacierLocalizationTools.View.OneTimeRunWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Doom Editor" Height="250" Width="450" ResizeMode="NoResize">
+        Title="Hitman Editor" Height="250" Width="450" ResizeMode="NoResize">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="booleanToVisibilityConverter" />
     </Window.Resources>
     <DockPanel>
-        <TextBlock DockPanel.Dock="Bottom" HorizontalAlignment="Center" Text="Processing game files. Please wait..." />
+        <TextBlock DockPanel.Dock="Bottom" HorizontalAlignment="Center" Text="{Binding LoadedFilePath, StringFormat=Processing {0}. Please wait...}" />
         <TextBlock DockPanel.Dock="Bottom" HorizontalAlignment="Center" Visibility="{Binding Path=HasError, Converter={StaticResource booleanToVisibilityConverter}}" Text="Error occured." />
         <Grid Height="50" DockPanel.Dock="Bottom">
             <ProgressBar Value="{Binding CurrentProgress, Mode=OneWay}" />
@@ -14,13 +14,13 @@
         </Grid>
 
         <Grid x:Name="imageGrid">
-            <!--<Grid.Background>
+            <Grid.Background>
                 <ImageBrush>
                     <ImageBrush.ImageSource>
-                        <BitmapImage UriSource="" />
+                        <BitmapImage UriSource="Hitman.bmp" />
                     </ImageBrush.ImageSource>
                 </ImageBrush>
-            </Grid.Background>-->
+            </Grid.Background>
         </Grid>
     </DockPanel>
 </Window>
