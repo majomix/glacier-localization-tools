@@ -52,7 +52,7 @@ namespace GlacierLocalizationTools.ViewModel
                     Func<RpkgEntry, bool> function = entry => true;
                     if(TextsOnly)
                     {
-                        function = entry => entry.Info.Signature == "EGLD" || entry.Info.Signature == "RCOL";
+                        function = entry => entry.Info.Signature == "EGLD" || entry.Info.Signature == "RCOL" || entry.Info.Signature == "VLTR";
                     }
 
                     ExtractFile(myTargetDirectory, function);

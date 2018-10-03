@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,12 +10,14 @@ namespace GlacierTextConverter.Model
     {
         public List<LocrTextFile> LocrFiles { get; private set; }
         public List<DlgeTextFile> DlgeFiles { get; private set; }
+        public List<RtlvTextFile> RtlvFiles { get; }
         public Dictionary<UInt32, string> Replacement { get; private set; }
 
         public TextConverter()
         {
             LocrFiles = new List<LocrTextFile>();
             DlgeFiles = new List<DlgeTextFile>();
+            RtlvFiles = new List<RtlvTextFile>();
             Replacement = new Dictionary<UInt32, string>();
         }
 
@@ -27,6 +29,11 @@ namespace GlacierTextConverter.Model
         public void LoadDlgeFolder(string directory)
         {
             LoadGameDataFolder(directory, filePath => DlgeFiles.Add(new DlgeTextFile() { Structure = LoadDlgeFile(filePath), Name = Path.GetFileName(filePath) }));
+        }
+
+        public void LoadRtlvFolder(string directory)
+        {
+            LoadGameDataFolder(directory, filePath => RtlvFiles.Add(LoadRtlvFile(filePath)));
         }
 
         public LocrTextFile LoadLocrFile(string path)
@@ -114,6 +121,24 @@ namespace GlacierTextConverter.Model
             return structure;
         }
 
+        public RtlvTextFile LoadRtlvFile(string path)
+        {
+            RtlvTextFile file = null;
+
+            var extension = Path.GetExtension(path);
+
+            if (extension != null && extension.Contains("patch"))
+            {
+                using (var reader = new GlacierRtlvBinaryReader(File.Open(path, FileMode.Open), Encoding.Unicode))
+                {
+                    file = reader.ReadFile();
+                    file.Name = Path.GetFileName(path);
+                }
+            }
+
+            return file;
+        }
+
         public void LoadTextFolder(string directory)
         {
             using (StreamReader reader = new StreamReader(File.Open(directory + @"\Slovak.txt", FileMode.Open), Encoding.UTF8))
@@ -152,6 +177,7 @@ namespace GlacierTextConverter.Model
                                 .Select(text => new { Identifier = text.Hash, Entry = text.Entry }))
                         .Concat(DlgeFiles
                             .Select(_ => new { Identifier = _.Structure.Identifier, Entry = _.Structure.Dialogues[languagePair.Value.Item2] }))
+                        .Concat(RtlvFiles.Where(_ => _ != null).Select(_ => new { Identifier = _.Identifier, Entry = _.Sections[languagePair.Value.Item1].Lines.First() }))
                         .Where(entry => entry.Entry != null)
                         .GroupBy(entry => entry.Entry))
                     {
@@ -232,6 +258,42 @@ namespace GlacierTextConverter.Model
                     }
 
                     writer.Write(file.Structure.Extra);
+                }
+            }
+        }
+
+        public void WriteRtlvFolder(string directory)
+        {
+            if (RtlvFiles == null) return;
+
+            Directory.CreateDirectory(directory);
+
+            foreach (var file in RtlvFiles)
+            {
+                using (var writer = new GlacierRtlvBinaryWriter(File.Open(directory + @"\" + file.Name, FileMode.Create), Encoding.UTF8))
+                {
+                    writer.Write(file);
+
+                    for (var i = 0; i < file.Sections.Count; i++)
+                    {
+                        var offsetAtBeginningOfSection = writer.BaseStream.Position;
+                        string finalString = GetReplacementString(file.Sections[i].Lines.First(), file.Identifier, GetLanguageMap()["English"].Item1 == i);
+                        writer.Write(finalString);
+                        var offsetAtEndOfSection = writer.BaseStream.Position;
+                        var sectionLength = offsetAtEndOfSection - offsetAtEndOfSection;
+                    }
+
+                    //for (int i = 0; i < file.Structure.Dialogues.Length; i++)
+                    //{
+                    //    string finalString = GetReplacementString(file.Structure.Dialogues[i], file.Structure.Identifier, GetLanguageMap()["English"].Item2 == i);
+                    //    writer.Write(finalString);
+                    //    if (finalString != null && i != file.Structure.Dialogues.Length - 1)
+                    //    {
+                    //        writer.WriteTrailingBytes(i);
+                    //    }
+                    //}
+
+                    //writer.Write(file.Structure.Extra);
                 }
             }
         }

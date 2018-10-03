@@ -65,11 +65,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Model\GlacierRtlvBinaryWriter.cs" />
     <Compile Include="Model\GlacierDlgeBinaryReader.cs" />
     <Compile Include="Model\DlgeTextFile.cs" />
     <Compile Include="Model\CypherStrategyPermutation.cs" />
     <Compile Include="Model\CypherStrategyTEA.cs" />
     <Compile Include="Model\GlacierDlgeBinaryWriter.cs" />
+    <Compile Include="Model\GlacierRtlvBinaryReader.cs" />
     <Compile Include="Model\LocrTextFile.cs" />
     <Compile Include="Model\GlacierLocrBinaryReader.cs" />
     <Compile Include="Model\GlacierLocrBinaryWriter.cs" />
@@ -79,6 +81,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Model\TextConverter.cs" />
     <Compile Include="Model\TextEntry.cs" />
+    <Compile Include="Model\RtlvTextFile.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
