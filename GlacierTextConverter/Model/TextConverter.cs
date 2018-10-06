@@ -133,6 +133,7 @@ namespace GlacierTextConverter.Model
                 {
                     file = reader.ReadFile();
                     file.Name = Path.GetFileName(path);
+                    file.Extra = reader.ReadBytes((int)(reader.BaseStream.Length - reader.BaseStream.Position));
                 }
             }
 
@@ -270,7 +271,7 @@ namespace GlacierTextConverter.Model
 
             foreach (var file in RtlvFiles)
             {
-                using (var writer = new GlacierRtlvBinaryWriter(File.Open(directory + @"\" + file.Name, FileMode.Create), Encoding.UTF8))
+                using (var writer = new GlacierRtlvBinaryWriter(File.Open(directory + @"2\" + file.Name, FileMode.Create), Encoding.UTF8))
                 {
                     writer.Write(file);
 
@@ -280,20 +281,17 @@ namespace GlacierTextConverter.Model
                         string finalString = GetReplacementString(file.Sections[i].Lines.First(), file.Identifier, GetLanguageMap()["English"].Item1 == i);
                         writer.Write(finalString);
                         var offsetAtEndOfSection = writer.BaseStream.Position;
-                        var sectionLength = offsetAtEndOfSection - offsetAtEndOfSection;
+                        var sectionLength = offsetAtEndOfSection - offsetAtBeginningOfSection - 4;
+
+                        file.Sections[i].StartingOffset = (int)offsetAtBeginningOfSection - 12;
+                        file.Sections[i].SectionLength = (short)sectionLength;
                     }
 
-                    //for (int i = 0; i < file.Structure.Dialogues.Length; i++)
-                    //{
-                    //    string finalString = GetReplacementString(file.Structure.Dialogues[i], file.Structure.Identifier, GetLanguageMap()["English"].Item2 == i);
-                    //    writer.Write(finalString);
-                    //    if (finalString != null && i != file.Structure.Dialogues.Length - 1)
-                    //    {
-                    //        writer.WriteTrailingBytes(i);
-                    //    }
-                    //}
+                    writer.BaseStream.Seek(0, SeekOrigin.Begin);
+                    writer.Write(file);
 
-                    //writer.Write(file.Structure.Extra);
+                    writer.BaseStream.Seek(0, SeekOrigin.End);
+                    writer.Write(file.Extra);
                 }
             }
         }

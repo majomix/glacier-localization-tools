@@ -37,7 +37,15 @@ namespace GlacierTextConverter.Model
             byte[] cypheredString = myStrategy.Cypher(value);
 
             Write(cypheredString.Length);
-            Write(cypheredString);
+
+            if (cypheredString.Length == 0)
+            {
+                Write((UInt32)0);
+            }
+            else
+            {
+                Write(cypheredString);
+            }
         }
     }
 }

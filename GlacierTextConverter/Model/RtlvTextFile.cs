@@ -12,6 +12,7 @@ namespace GlacierTextConverter.Model
         public byte[] StaticContext2;
         public List<RtvlLanguageSection> Sections;
         public string Name;
+        public byte[] Extra;
 
         public RtlvTextFile()
         {
