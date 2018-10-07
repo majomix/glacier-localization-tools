@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -127,14 +127,11 @@ namespace GlacierTextConverter.Model
 
             var extension = Path.GetExtension(path);
 
-            if (extension != null && extension.Contains("patch"))
+            using (var reader = new GlacierRtlvBinaryReader(File.Open(path, FileMode.Open), Encoding.Unicode))
             {
-                using (var reader = new GlacierRtlvBinaryReader(File.Open(path, FileMode.Open), Encoding.Unicode))
-                {
-                    file = reader.ReadFile();
-                    file.Name = Path.GetFileName(path);
-                    file.Extra = reader.ReadBytes((int)(reader.BaseStream.Length - reader.BaseStream.Position));
-                }
+                file = reader.ReadFile();
+                file.Name = Path.GetFileName(path);
+                file.Extra = reader.ReadBytes((int)(reader.BaseStream.Length - reader.BaseStream.Position));
             }
 
             return file;
@@ -271,7 +268,7 @@ namespace GlacierTextConverter.Model
 
             foreach (var file in RtlvFiles)
             {
-                using (var writer = new GlacierRtlvBinaryWriter(File.Open(directory + @"2\" + file.Name, FileMode.Create), Encoding.UTF8))
+                using (var writer = new GlacierRtlvBinaryWriter(File.Open(directory + @"\" + file.Name, FileMode.Create), Encoding.UTF8))
                 {
                     writer.Write(file);
 
@@ -286,6 +283,8 @@ namespace GlacierTextConverter.Model
                         file.Sections[i].StartingOffset = (int)offsetAtBeginningOfSection - 12;
                         file.Sections[i].SectionLength = (short)sectionLength;
                     }
+
+                    file.FileSize = (UInt32)writer.BaseStream.Position;
 
                     writer.BaseStream.Seek(0, SeekOrigin.Begin);
                     writer.Write(file);
@@ -323,7 +322,7 @@ namespace GlacierTextConverter.Model
                 {
                     action(filePath);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     File.Delete(filePath);
                     Console.WriteLine(filePath);

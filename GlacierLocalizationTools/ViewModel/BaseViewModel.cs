@@ -110,7 +110,7 @@ namespace GlacierLocalizationTools.ViewModel
 
         public void ResolveNewFiles(string directory)
         {
-            string[] infoNames = new string[] { "EGLD", "RCOL" };
+            string[] infoNames = new string[] { "EGLD", "RCOL", "VLTR" };
             Dictionary<string, Dictionary<UInt64, RpkgEntry>> fileMap = new Dictionary<string, Dictionary<ulong, RpkgEntry>>();
 
             foreach(string infoName in infoNames)

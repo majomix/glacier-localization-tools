@@ -16,9 +16,9 @@ namespace GlacierTextConverter.Model
             var file = new RtlvTextFile();
             var cypherStrategy = new CypherStrategyTEA();
 
-            file.Header = ReadBytes(10);
-            file.FileSize = ReadUInt32();
-            file.StaticContext = ReadBytes(166);
+            file.Header = ReadBytes(8);
+            file.FileSize = this.ReadUInt32BE();
+            file.StaticContext = ReadBytes(168);
             file.Identifier = ReadUInt32();
             file.StaticContext2 = ReadBytes(360);
 

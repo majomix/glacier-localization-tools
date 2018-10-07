@@ -17,7 +17,7 @@ namespace GlacierTextConverter.Model
         public void Write(RtlvTextFile file)
         {
             Write(file.Header);
-            Write(file.FileSize);
+            this.WriteUInt32BE((UInt32)(file.FileSize - 16));
             Write(file.StaticContext);
             Write(file.Identifier);
             Write(file.StaticContext2);

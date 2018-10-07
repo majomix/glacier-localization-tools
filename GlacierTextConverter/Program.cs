@@ -22,8 +22,9 @@ namespace GlacierTextConverter
 
             converter.LoadLocrFolder(directory + @"\RCOL");
             converter.LoadDlgeFolder(directory + @"\EGLD");
+            converter.LoadRtlvFolder(directory + @"\VLTR");
 
-            if(export)
+            if (export)
             {
                 converter.WriteCombinedTextFile(directory);
             }
@@ -32,6 +33,7 @@ namespace GlacierTextConverter
                 converter.LoadTextFolder(directory);
                 converter.WriteLocrFolder(directory + @"\RCOL");
                 converter.WriteDlgeFolder(directory + @"\EGLD");
+                converter.WriteRtlvFolder(directory + @"\VLTR");
             }
         }
     }

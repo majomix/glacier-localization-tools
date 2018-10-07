@@ -65,6 +65,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Model\Extensions.cs" />
     <Compile Include="Model\GlacierRtlvBinaryWriter.cs" />
     <Compile Include="Model\GlacierDlgeBinaryReader.cs" />
     <Compile Include="Model\DlgeTextFile.cs" />
