@@ -8,17 +8,17 @@ namespace GlacierTextConverter.Model
 {
     public class TextConverter
     {
-        public List<LocrTextFile> LocrFiles { get; private set; }
-        public List<DlgeTextFile> DlgeFiles { get; private set; }
+        public List<LocrTextFile> LocrFiles { get; }
+        public List<DlgeTextFile> DlgeFiles { get; }
         public List<RtlvTextFile> RtlvFiles { get; }
-        public Dictionary<UInt32, string> Replacement { get; private set; }
+        private readonly Dictionary<UInt32, HashHolder> _replacement;
 
         public TextConverter()
         {
             LocrFiles = new List<LocrTextFile>();
             DlgeFiles = new List<DlgeTextFile>();
             RtlvFiles = new List<RtlvTextFile>();
-            Replacement = new Dictionary<UInt32, string>();
+            _replacement = new Dictionary<UInt32, HashHolder>();
         }
 
         public void LoadLocrFolder(string directory)
@@ -28,7 +28,7 @@ namespace GlacierTextConverter.Model
 
         public void LoadDlgeFolder(string directory)
         {
-            LoadGameDataFolder(directory, filePath => DlgeFiles.Add(new DlgeTextFile() { Structure = LoadDlgeFile(filePath), Name = Path.GetFileName(filePath) }));
+            LoadGameDataFolder(directory, filePath => DlgeFiles.Add(LoadDlgeFile(filePath)));
         }
 
         public void LoadRtlvFolder(string directory)
@@ -38,30 +38,31 @@ namespace GlacierTextConverter.Model
 
         public LocrTextFile LoadLocrFile(string path)
         {
-            LocrTextFile file = null;
+            LocrTextFile file;
 
-            using (GlacierLocrBinaryReader reader = new GlacierLocrBinaryReader(File.Open(path, FileMode.Open), Encoding.Unicode))
+            using (var openFile = File.Open(path, FileMode.Open))
+            using (var reader = new GlacierLocrBinaryReader(openFile, Encoding.Unicode))
             {
-                List<LanguageSection> languageSections = new List<LanguageSection>();
+                var languageSections = new List<LanguageSection>();
 
-                for (int i = 0; i < reader.NumberOfLanguages; i++)
+                for (var i = 0; i < reader.NumberOfLanguages; i++)
                 {
-                    LanguageSection section = new LanguageSection();
+                    var section = new LanguageSection();
                     section.StartingOffset = reader.ReadUInt32();
 
                     languageSections.Add(section);
                 }
 
-                for (int i = 0; i < reader.NumberOfLanguages; i++)
+                for (var i = 0; i < reader.NumberOfLanguages; i++)
                 {
-                    LanguageSection section = languageSections[i];
-                    if(section.StartingOffset != uint.MaxValue)
+                    var section = languageSections[i];
+                    if (section.StartingOffset != uint.MaxValue)
                     {
-                        int numberOfEntries = reader.ReadInt32();
+                        var numberOfEntries = reader.ReadInt32();
 
                         for (int y = 0; y < numberOfEntries; y++)
                         {
-                            TextEntry entry = new TextEntry();
+                            var entry = new TextEntry();
                             entry.Hash = reader.ReadUInt32();
                             entry.Entry = reader.ReadString();
                             section.Entries.Add(entry);
@@ -80,52 +81,68 @@ namespace GlacierTextConverter.Model
             return file;
         }
 
-        public DlgeStructure LoadDlgeFile(string path)
+        public DlgeTextFile LoadDlgeFile(string path)
         {
-            DlgeStructure structure = null;
+            var dlgeFile = new DlgeTextFile
+            {
+                Name = Path.GetFileName(path)
+            };
+            DlgeStructure structure;
 
-            using (GlacierDlgeBinaryReader reader = new GlacierDlgeBinaryReader(File.Open(path, FileMode.Open), Encoding.Unicode))
+            using (var file = File.Open(path, FileMode.Open))
+            using (var reader = new GlacierDlgeBinaryReader(file, Encoding.Unicode))
             {
                 int numberOfLanguages = 12;
                 ICypherStrategy cypherStrategy = new CypherStrategyTEA();
 
-                structure = reader.ReadStructure();
-                int nonEmptyStrings = 0;
-
-                for (int i = 0; i < numberOfLanguages; i++)
+                reader.ReadHeader();
+                int iteration = 0;
+                while (reader.HasText())
                 {
-                    structure.Dialogues[i] = reader.ReadString(cypherStrategy);
+                    structure = reader.ReadStructure(iteration);
+                    int nonEmptyStrings = 0;
 
-                    if(!string.IsNullOrEmpty(structure.Dialogues[i]))
+                    for (int i = 0; i < numberOfLanguages; i++)
                     {
-                        nonEmptyStrings++;
-                    }
+                        structure.Dialogues[i] = reader.ReadString(cypherStrategy);
 
-                    if (i != numberOfLanguages - 1)
-                    {
-                        if (reader.ReadLanguageMetadataAndDetermineIfEmpty(i))
+                        if (!string.IsNullOrEmpty(structure.Dialogues[i]))
                         {
-                            i++;
+                            nonEmptyStrings++;
+                        }
+
+                        if (i != numberOfLanguages - 1)
+                        {
+                            if (reader.ReadLanguageMetadataAndDetermineIfEmpty(i, iteration))
+                            {
+                                i++;
+                            }
                         }
                     }
+
+                    if (nonEmptyStrings == 0)
+                    {
+                        if (iteration == 0)
+                        {
+                            throw new InvalidDataException("No text inside dialogue file.");
+                        }
+                    }
+
+                    dlgeFile.Structures.Add(structure);
+
+                    iteration++;
                 }
 
-                if(nonEmptyStrings == 0)
-                {
-                    throw new InvalidDataException("No text inside dialogue file.");
-                }
-
-                structure.Extra = reader.ReadBytes((int)(reader.BaseStream.Length - reader.BaseStream.Position));
+                reader.BaseStream.Seek(-1, SeekOrigin.Current);
+                dlgeFile.Extra = reader.ReadBytes((int)(reader.BaseStream.Length - reader.BaseStream.Position));
             }
 
-            return structure;
+            return dlgeFile;
         }
 
         public RtlvTextFile LoadRtlvFile(string path)
         {
             RtlvTextFile file = null;
-
-            var extension = Path.GetExtension(path);
 
             using (var reader = new GlacierRtlvBinaryReader(File.Open(path, FileMode.Open), Encoding.Unicode))
             {
@@ -139,20 +156,31 @@ namespace GlacierTextConverter.Model
 
         public void LoadTextFolder(string directory)
         {
-            using (StreamReader reader = new StreamReader(File.Open(directory + @"\Slovak.txt", FileMode.Open), Encoding.UTF8))
+            var slovakContent = File.ReadAllLines(directory + @"\Slovak.txt", Encoding.Unicode);
+            var engliishContent = File.ReadAllLines(directory + @"\English.txt", Encoding.Unicode);
+            
+            for (var i = 0; i < slovakContent.Length; i++)
             {
-                string line = null;
+                var slovakLine = slovakContent[i];
+                var englishLine = engliishContent[i];
 
-                while ((line = reader.ReadLine()) != null)
+                string[] slovakTokens = slovakLine.Split(new[] { '\t' }, 2);
+                string[] englishTokens = englishLine.Split(new[] { '\t' }, 2);
+
+                if (slovakTokens.Length == 2)
                 {
-                    string[] tokens = line.Split(new Char[] { '\t' }, 2);
-
-                    if (tokens.Count() == 2)
+                    foreach(var identifier in slovakTokens[0].Split(','))
                     {
-                        foreach(var identifier in tokens[0].Split(new Char[] { ',' }))
+                        var key = Convert.ToUInt32(identifier, 16);
+                        HashHolder holder;
+
+                        if (!_replacement.TryGetValue(key, out holder))
                         {
-                            Replacement[Convert.ToUInt32(identifier, 16)] = tokens[1];
+                            holder = new HashHolder();
+                            _replacement.Add(key, holder);
                         }
+
+                        holder.Add(englishTokens[1], slovakTokens[1]);
                     }
                 }
             }
@@ -168,13 +196,14 @@ namespace GlacierTextConverter.Model
             {
                 using (StreamWriter writer = new StreamWriter(File.Open(directory + @"\" + languagePair.Key + ".txt", FileMode.Create), Encoding.UTF8))
                 {
-                    foreach (var textEntry in 
+                    foreach (var textEntry in
                         LocrFiles
                             .Where(file => file.LanguageSections.Count > languagePair.Value.Item1)
                             .SelectMany(_ => _.LanguageSections[languagePair.Value.Item1].Entries
                                 .Select(text => new { Identifier = text.Hash, Entry = text.Entry }))
                         .Concat(DlgeFiles
-                            .Select(_ => new { Identifier = _.Structure.Identifier, Entry = _.Structure.Dialogues[languagePair.Value.Item2] }))
+                            .SelectMany(_ => _.Structures)
+                            .Select(s => new { Identifier = s.Identifier, Entry = s.Dialogues[languagePair.Value.Item2] }))
                         .Concat(RtlvFiles.Where(_ => _ != null).Select(_ => new { Identifier = _.Identifier, Entry = _.Sections[languagePair.Value.Item1].Lines.First() }))
                         .Where(entry => entry.Entry != null)
                         .GroupBy(entry => entry.Entry))
@@ -239,23 +268,33 @@ namespace GlacierTextConverter.Model
 
             Directory.CreateDirectory(directory);
 
-            foreach (DlgeTextFile file in DlgeFiles)
+            foreach (var dlgeFile in DlgeFiles)
             {
-                using (GlacierDlgeBinaryWriter writer = new GlacierDlgeBinaryWriter(File.Open(directory + @"\" + file.Name, FileMode.Create), Encoding.UTF8))
+                using (var file = File.Open(directory + @"\" + dlgeFile.Name, FileMode.Create))
                 {
-                    writer.Write(file.Structure);
-
-                    for (int i = 0; i < file.Structure.Dialogues.Length; i++)
+                    using (var writer = new GlacierDlgeBinaryWriter(file, Encoding.UTF8))
                     {
-                        string finalString = GetReplacementString(file.Structure.Dialogues[i], file.Structure.Identifier, GetLanguageMap()["English"].Item2 == i);
-                        writer.Write(finalString);
-                        if (finalString != null && i != file.Structure.Dialogues.Length - 1)
-                        {
-                            writer.WriteTrailingBytes(i);
-                        }
-                    }
+                        writer.WriteHeader();
 
-                    writer.Write(file.Structure.Extra);
+                        for (var iteration = 0; iteration < dlgeFile.Structures.Count; iteration++)
+                        {
+                            var structure = dlgeFile.Structures[iteration];
+                            writer.Write(structure, iteration);
+
+                            for (int i = 0; i < structure.Dialogues.Length; i++)
+                            {
+                                string finalString = GetReplacementString(structure.Dialogues[i], structure.Identifier,
+                                    GetLanguageMap()["English"].Item2 == i);
+                                writer.Write(finalString);
+                                if (finalString != null && i != structure.Dialogues.Length - 1)
+                                {
+                                    writer.WriteTrailingBytes(i, iteration);
+                                }
+                            }
+                        }
+
+                        writer.Write(dlgeFile.Extra);
+                    }
                 }
             }
         }
@@ -324,24 +363,25 @@ namespace GlacierTextConverter.Model
                 }
                 catch (Exception)
                 {
-                    File.Delete(filePath);
+                    //File.Delete(filePath);
                     Console.WriteLine(filePath);
                 }
             }
         }
 
-        private string GetReplacementString(string entry, UInt32 hash, bool extraCondition)
+        private string GetReplacementString(string entry, UInt32 hash, bool shouldReplace)
         {
             if (entry == null) return entry;
 
             string finalString = entry;
 
-            if (extraCondition && Replacement.ContainsKey(hash))
+            if (shouldReplace && _replacement.ContainsKey(hash))
             {
-                finalString = Replacement[hash];
+                var holder = _replacement[hash];
+                finalString = holder.GetReplacement(entry);
             }
 
-            return finalString.Replace("\\n", "\r\n");
+            return finalString;
         }
     }
 }

@@ -73,6 +73,7 @@
     <Compile Include="Model\CypherStrategyTEA.cs" />
     <Compile Include="Model\GlacierDlgeBinaryWriter.cs" />
     <Compile Include="Model\GlacierRtlvBinaryReader.cs" />
+    <Compile Include="Model\HashHolder.cs" />
     <Compile Include="Model\LocrTextFile.cs" />
     <Compile Include="Model\GlacierLocrBinaryReader.cs" />
     <Compile Include="Model\GlacierLocrBinaryWriter.cs" />

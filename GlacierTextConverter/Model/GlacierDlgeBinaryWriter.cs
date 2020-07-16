@@ -24,28 +24,32 @@ namespace GlacierTextConverter.Model
             Write(cypheredString);
         }
 
-        public void Write(DlgeStructure structure)
+        public void WriteHeader()
         {
             Write((Int32)0);
             Write((Int32)1);
+        }
+
+        public void Write(DlgeStructure structure, int iteration)
+        {
             Write((byte)1);
             Write(structure.Category);
             Write(structure.Identifier);
             Write((Int32)0);
             Write((Int64)(-1));
             Write((Int64)0);
-            Write((Int32)2);
-            Write((Int32)3);
+            Write((Int32)2 + iteration * 4);
+            Write((Int32)3 + iteration * 4);
         }
 
-        public void WriteTrailingBytes(int index)
+        public void WriteTrailingBytes(int i, int iteration)
         {
             Write((Int32)0);
 
-            if(index == 9)
+            if(i == 9)
             {
-                Write((Int32)4);
-                Write((Int32)5);
+                Write((Int32)4 + iteration * 4);
+                Write((Int32)5 + iteration * 4);
             }
             else
             {

@@ -19,14 +19,14 @@ namespace GlacierTextConverter
             return cypherStrategy.Decypher(bytes);
         }
 
-        public bool ReadLanguageMetadataAndDetermineIfEmpty(int i)
+        public bool ReadLanguageMetadataAndDetermineIfEmpty(int i, int iteration)
         {
             ConfirmEquality(ReadInt32(), 0);
 
             if(i == 9)
             {
-                ConfirmEquality(ReadInt32(), 4);
-                ConfirmEquality(ReadInt32(), 5);
+                ConfirmEquality(ReadInt32(), 4 + iteration * 4);
+                ConfirmEquality(ReadInt32(), 5 + iteration * 4);
 
                 return true;
             }
@@ -39,20 +39,25 @@ namespace GlacierTextConverter
             }
         }
 
-        public DlgeStructure ReadStructure()
+        public bool ReadHeader()
+        {
+            ConfirmEquality(ReadInt32(), 0);
+            ConfirmEquality(ReadInt32(), 1);
+
+            return true;
+        }
+
+        public DlgeStructure ReadStructure(int iteration)
         {
             DlgeStructure structure = new DlgeStructure();
 
-            ConfirmEquality(ReadInt32(), 0);
-            ConfirmEquality(ReadInt32(), 1);
-            ConfirmEquality(ReadByte(), 1);
             structure.Category = ReadInt32();
             structure.Identifier = ReadUInt32();
             ConfirmEquality(ReadInt32(), 0);
             ConfirmEquality(ReadInt64(), -1);
             ConfirmEquality(ReadInt64(), 0);
-            ConfirmEquality(ReadInt32(), 2);
-            ConfirmEquality(ReadInt32(), 3);
+            ConfirmEquality(ReadInt32(), 2 + iteration * 4);
+            ConfirmEquality(ReadInt32(), 3 + iteration * 4);
 
             structure.Dialogues = new string[12];
 
@@ -65,6 +70,11 @@ namespace GlacierTextConverter
             {
                 throw new InvalidDataException();
             }
+        }
+
+        public bool HasText()
+        {
+            return ReadByte() == 1;
         }
     }
 }
