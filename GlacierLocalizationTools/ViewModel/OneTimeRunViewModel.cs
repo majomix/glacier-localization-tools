@@ -2,8 +2,10 @@
 using GlacierLocalizationTools.ViewModel.Commands;
 using NDesk.Options;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Windows;
 using System.Windows.Input;
 
 namespace GlacierLocalizationTools.ViewModel
@@ -62,29 +64,48 @@ namespace GlacierLocalizationTools.ViewModel
 
         public void Import()
         {
-            if (myTargetDirectory != null && Directory.Exists(myTargetDirectory))
+            try
             {
-                foreach (string file in Directory.GetFiles(mySourceDirectory, "*.rpkg"))
+                if (myTargetDirectory != null && Directory.Exists(myTargetDirectory))
                 {
-                    LoadedFilePath = file;
-                    LoadStructure();
-                    ResolveNewFiles(myTargetDirectory);
-
-                    if (Repack)
+                    foreach (string file in Directory.GetFiles(mySourceDirectory, "*.rpkg"))
                     {
-                        string randomName = LoadedFilePath + "_tmp" + new Random().Next().ToString();
-                        SaveStructureByRepack(randomName);
+                        LoadedFilePath = file;
+                        LoadStructure();
+                        ResolveNewFiles(myTargetDirectory);
 
-                        File.Delete(LoadedFilePath);
-                        File.Move(randomName, LoadedFilePath);
-                    }
-                    else
-                    {
-                        SaveStructureByAppend();
+                        if (Repack)
+                        {
+                            string randomName = LoadedFilePath + "_tmp" + new Random().Next().ToString();
+                            SaveStructureByRepack(randomName);
+
+                            File.Delete(LoadedFilePath);
+                            File.Move(randomName, LoadedFilePath);
+                        }
+                        else
+                        {
+                            SaveStructureByAppend();
+                        }
                     }
                 }
+
+            }
+
+            catch (Exception ex)
+            {
+                var mess = new List<string>();
+                mess.Add(ex.Message);
+                mess.Add(ex.StackTrace);
+                if (ex.InnerException != null)
+                {
+                    mess.Add(ex.InnerException.Message);
+                    mess.Add(ex.InnerException.StackTrace);
+                }
+
+                MessageBox.Show(string.Join("\n", mess));
             }
         }
+
 
         private string CreateFullPath(string path, bool isDirectory)
         {

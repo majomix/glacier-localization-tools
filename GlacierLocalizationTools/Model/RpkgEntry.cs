@@ -6,6 +6,7 @@ namespace GlacierLocalizationTools.Model
     {
         public UInt64 Hash { get; set; }
         public UInt64 Offset { get; set; }
+        public string Name { get; set; }
         public UInt32 CompressedSizeWithFlags
         {
             get

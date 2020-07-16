@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace GlacierLocalizationTools.Model
 {
@@ -8,11 +10,28 @@ namespace GlacierLocalizationTools.Model
 
         public void LoadRpkgFileStructure(RpkgBinaryReader reader)
         {
+            var hashes = new List<string>(); //File.ReadAllLines(@"Hitman_Hashes.txt");
+            var dictionary = new Dictionary<UInt64, string>();
+
+            foreach (var hash in hashes)
+            {
+                var parts = hash.Split(' ');
+                var hashedName = UInt64.Parse(parts[0]);
+                var name = parts[1];
+                dictionary.Add(hashedName, name);
+            }
+
             Archive = reader.ReadHeader();
-            
+
             for(int i = 0; i < Archive.NumberOfFiles; i++)
             {
-                Archive.Entries.Add(reader.ReadEntry());
+                var entry = reader.ReadEntry();
+                Archive.Entries.Add(entry);
+
+                if (dictionary.ContainsKey(entry.Hash))
+                {
+                    entry.Name = dictionary[entry.Hash];
+                }
             }
 
             for (int i = 0; i < Archive.NumberOfFiles; i++)
@@ -25,7 +44,17 @@ namespace GlacierLocalizationTools.Model
         {
             if (reader.BaseStream.Position != (long) rpkgEntry.Offset) reader.BaseStream.Seek((long) rpkgEntry.Offset, SeekOrigin.Begin);
 
-            string compoundName = directory + @"\" + rpkgEntry.Info.Signature + @"\" + rpkgEntry.Hash.ToString("X") + ".dat";
+            string compoundName;
+
+            if (rpkgEntry.Name == null)
+            {
+                compoundName = directory + @"\" + rpkgEntry.Info.Signature + @"\" + rpkgEntry.Hash.ToString("X") + ".dat";
+            }
+            else
+            {
+                compoundName = directory + @"\" + rpkgEntry.Info.Signature + @"\" + rpkgEntry.Name;
+                compoundName = compoundName.Substring(0, compoundName.Length > 235 ? 235 : compoundName.Length);
+            }
 
             Directory.CreateDirectory(Path.GetDirectoryName(compoundName));
 
@@ -34,19 +63,26 @@ namespace GlacierLocalizationTools.Model
                 compoundName += @"_" + Path.GetFileNameWithoutExtension(((FileStream)reader.BaseStream).Name);
             }
 
-            using (FileStream fileStream = File.Open(compoundName, FileMode.Create))
+            try
             {
-                using (BinaryWriter writer = new BinaryWriter(fileStream))
+                using (FileStream fileStream = File.Open(compoundName, FileMode.Create))
                 {
-                    if(rpkgEntry.IsCompressed)
+                    using (BinaryWriter writer = new BinaryWriter(fileStream))
                     {
-                        writer.Write(reader.ReadCompressedBytes(rpkgEntry.CompressedSize, rpkgEntry.Info.DecompressedDataSize));
-                    }
-                    else
-                    {
-                        writer.Write(reader.ReadBytes((int)rpkgEntry.Info.DecompressedDataSize));
+                        if (rpkgEntry.IsCompressed)
+                        {
+                            writer.Write(reader.ReadCompressedBytes(rpkgEntry.CompressedSize, rpkgEntry.Info.DecompressedDataSize));
+                        }
+                        else
+                        {
+                            writer.Write(reader.ReadBytes((int)rpkgEntry.Info.DecompressedDataSize));
+                        }
                     }
                 }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
             }
         }
 

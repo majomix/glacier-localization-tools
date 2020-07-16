@@ -1,5 +1,7 @@
 ﻿using GlacierLocalizationTools.ViewModel;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Windows;
 
 namespace GlacierLocalizationTools.View
@@ -20,21 +22,37 @@ namespace GlacierLocalizationTools.View
 
         protected override void OnContentRendered(EventArgs e)
         {
-            OneTimeRunViewModel oneTimeRunViewModel = DataContext as OneTimeRunViewModel;
-            if (oneTimeRunViewModel != null)
+            try
             {
-                if (oneTimeRunViewModel.Export == null)
+                OneTimeRunViewModel oneTimeRunViewModel = DataContext as OneTimeRunViewModel;
+                if (oneTimeRunViewModel != null)
                 {
-                    Close();
+                    if (oneTimeRunViewModel.Export == null)
+                    {
+                        Close();
+                    }
+                    else if (oneTimeRunViewModel.Export == true)
+                    {
+                        oneTimeRunViewModel.ExtractByParameterCommand.Execute(oneTimeRunViewModel);
+                    }
+                    else
+                    {
+                        oneTimeRunViewModel.ImportByParameterCommand.Execute(oneTimeRunViewModel);
+                    }
                 }
-                else if (oneTimeRunViewModel.Export == true)
+            }
+            catch (Exception ex)
+            {
+                var mess = new List<string>();
+                mess.Add(ex.Message);
+                mess.Add(ex.StackTrace);
+                if (ex.InnerException != null)
                 {
-                    oneTimeRunViewModel.ExtractByParameterCommand.Execute(oneTimeRunViewModel);
+                    mess.Add(ex.InnerException.Message);
+                    mess.Add(ex.InnerException.StackTrace);
                 }
-                else
-                {
-                    oneTimeRunViewModel.ImportByParameterCommand.Execute(oneTimeRunViewModel);
-                }
+
+                MessageBox.Show(string.Join("\n", mess));
             }
         }
     }
