@@ -108,7 +108,7 @@ namespace GlacierLocalizationTools.ViewModel
             }
         }
 
-        public void ResolveNewFiles(string directory)
+        public void ResolveNewFiles(string directory, string archiveName)
         {
             string[] infoNames = new string[] { "EGLD", "RCOL", "VLTR", "FXFG" };
             Dictionary<string, Dictionary<UInt64, RpkgEntry>> fileMap = new Dictionary<string, Dictionary<ulong, RpkgEntry>>();
@@ -126,7 +126,13 @@ namespace GlacierLocalizationTools.ViewModel
                 }
             }
 
-            string[] fileList = Directory.GetFiles(directory, "*", SearchOption.AllDirectories);
+            var searchPath = directory;
+            if (archiveName != null)
+            {
+                searchPath += @"\" + archiveName;
+            }
+
+            string[] fileList = Directory.GetFiles(searchPath, "*", SearchOption.AllDirectories);
             foreach (string file in fileList)
             {
                 string sufix = Path.GetFileNameWithoutExtension(LoadedFilePath);
@@ -136,7 +142,7 @@ namespace GlacierLocalizationTools.ViewModel
                     continue;
                 }
 
-                string[] tokens = file.Split(new string[] { directory + @"\" }, StringSplitOptions.RemoveEmptyEntries);
+                string[] tokens = file.Split(new string[] { searchPath + @"\" }, StringSplitOptions.RemoveEmptyEntries);
                 if (!String.IsNullOrWhiteSpace(tokens[0]))
                 {
                     string[] filepath = tokens[0].Split('\\');
@@ -161,16 +167,16 @@ namespace GlacierLocalizationTools.ViewModel
 
         public void SaveStructureByRepack(string path)
         {
-            using (RpkgBinaryReader reader = new RpkgBinaryReader(GetRpkgVersion(LoadedFilePath), File.Open(LoadedFilePath, FileMode.Open)))
+            using (var reader = new RpkgBinaryReader(GetRpkgVersion(LoadedFilePath), File.Open(LoadedFilePath, FileMode.Open)))
             {
-                using (RpkgBinaryWriter writer = new RpkgBinaryWriter(GetRpkgVersion(path), File.Open(path, FileMode.Create)))
+                using (var writer = new RpkgBinaryWriter(GetRpkgVersion(path), File.Open(path, FileMode.Create)))
                 {
                     Model.SaveOriginalRpkgFileStructure(writer);
 
                     long currentSize = 0;
                     long totalSize = Model.Archive.Entries.Sum(_ => _.CompressedSize);
 
-                    foreach (RpkgEntry entry in Model.Archive.Entries)
+                    foreach (var entry in Model.Archive.Entries)
                     {
                         Model.SaveDataEntry(reader, writer, entry);
                         CurrentProgress = (int)(currentSize * 100.0 / totalSize);
@@ -187,13 +193,14 @@ namespace GlacierLocalizationTools.ViewModel
 
         public void SaveStructureByAppend()
         {
-            using (RpkgBinaryWriter writer = new RpkgBinaryWriter(GetRpkgVersion(LoadedFilePath), File.Open(LoadedFilePath, FileMode.Open, FileAccess.ReadWrite)))
+            using (var file = File.Open(LoadedFilePath, FileMode.Open, FileAccess.ReadWrite))
+            using (var writer = new RpkgBinaryWriter(GetRpkgVersion(LoadedFilePath), file))
             {
                 long currentSize = 0;
                 var entries = Model.Archive.Entries.Where(_ => _.Import != null).ToList();
                 long totalSize = entries.Sum(_ => _.CompressedSize);
 
-                foreach (RpkgEntry entry in entries)
+                foreach (var entry in entries)
                 {
                     Model.AppendDataEntry(writer, entry);
                     CurrentProgress = (int)(currentSize * 100.0 / totalSize);

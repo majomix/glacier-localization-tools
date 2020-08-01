@@ -7,20 +7,19 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
 
 namespace GlacierLocalizationTools.ViewModel
 {
     internal class OneTimeRunViewModel : BaseViewModel
     {
-        private string mySourceDirectory;
-        private string myTargetDirectory;
+        private string _sourceDirectory;
+        private string _targetDirectory;
         public bool? Export { get; set; }
         public bool TextsOnly { get; set; }
         public bool SeparateDirectories { get; set; }
         public bool Repack { get; set; }
-        public ICommand ExtractByParameterCommand { get; private set; }
-        public ICommand ImportByParameterCommand { get; private set; }
+        public ICommand ExtractByParameterCommand { get; }
+        public ICommand ImportByParameterCommand { get; }
 
         public OneTimeRunViewModel()
         {
@@ -36,8 +35,8 @@ namespace GlacierLocalizationTools.ViewModel
             OptionSet options = new OptionSet()
                 .Add("export", value => Export = true)
                 .Add("import", value => Export = false)
-                .Add("runtime=", value => mySourceDirectory = CreateFullPath(value, true))
-                .Add("userdata=", value => myTargetDirectory = CreateFullPath(value, true))
+                .Add("runtime=", value => _sourceDirectory = CreateFullPath(value, true))
+                .Add("userdata=", value => _targetDirectory = CreateFullPath(value, true))
                 .Add("separatedirs", value => SeparateDirectories = true)
                 .Add("textsonly", value => TextsOnly = true)
                 .Add("repack", value => Repack = true);
@@ -47,9 +46,9 @@ namespace GlacierLocalizationTools.ViewModel
 
         public void Extract()
         {
-            if (myTargetDirectory != null && mySourceDirectory != null)
+            if (_targetDirectory != null && _sourceDirectory != null)
             {
-                foreach(string file in Directory.GetFiles(mySourceDirectory, "*.rpkg"))
+                foreach(string file in Directory.GetFiles(_sourceDirectory, "*.rpkg"))
                 {
                     LoadedFilePath = file;
                     LoadStructure();
@@ -60,7 +59,7 @@ namespace GlacierLocalizationTools.ViewModel
                         function = entry => entry.Info.Signature == "EGLD" || entry.Info.Signature == "RCOL" || entry.Info.Signature == "VLTR";
                     }
 
-                    string finalDirectory = myTargetDirectory;
+                    string finalDirectory = _targetDirectory;
                     if (SeparateDirectories)
                     {
                         finalDirectory += @"\";
@@ -78,13 +77,16 @@ namespace GlacierLocalizationTools.ViewModel
         {
             try
             {
-                if (myTargetDirectory != null && Directory.Exists(myTargetDirectory))
+                if (_targetDirectory != null && Directory.Exists(_targetDirectory))
                 {
-                    foreach (string file in Directory.GetFiles(mySourceDirectory, "*.rpkg"))
+                    foreach (string file in Directory.GetFiles(_sourceDirectory, "*.rpkg"))
                     {
                         LoadedFilePath = file;
                         LoadStructure();
-                        ResolveNewFiles(myTargetDirectory);
+                        var filename = Path.GetFileNameWithoutExtension(file);
+                        var split = filename.Split(new[] { @"patch" }, StringSplitOptions.None);
+
+                        ResolveNewFiles(_targetDirectory, SeparateDirectories ? split[0] : null);
 
                         if (Repack)
                         {
@@ -100,9 +102,7 @@ namespace GlacierLocalizationTools.ViewModel
                         }
                     }
                 }
-
             }
-
             catch (Exception ex)
             {
                 var mess = new List<string>();
@@ -115,6 +115,7 @@ namespace GlacierLocalizationTools.ViewModel
                 }
 
                 MessageBox.Show(string.Join("\n", mess));
+                throw;
             }
         }
 

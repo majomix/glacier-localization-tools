@@ -65,7 +65,7 @@ namespace GlacierLocalizationTools.Model
         public int WriteCompressedBytes(byte[] input)
         {
             byte[] encryptionKey = new byte[] { 0xDC, 0x45, 0xA6, 0x9C, 0xD3, 0x72, 0x4C, 0xAB };
-            byte[] outputBuffer = new byte[input.Length];
+            byte[] outputBuffer = new byte[input.Length * 2];
 
             int compressedSize = LZ4Handler.LZ4_compress(input, outputBuffer, input.Length);
 

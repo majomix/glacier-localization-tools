@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Microsoft.Win32;
 
 namespace GlacierTextConverter.Model
 {
@@ -204,7 +203,7 @@ namespace GlacierTextConverter.Model
             foreach (var languagePair in GetLanguageMap())
             {
                 using (var textFile = File.Open(directory + @"\" + languagePair.Key + ".txt", FileMode.Create))
-                using (var writer = new StreamWriter(textFile, Encoding.UTF8))
+                using (var writer = new StreamWriter(textFile, Encoding.Unicode))
                 {
                     foreach (var category in _categories.OrderBy(c => c.Length).ThenBy(c => c))
                     {
@@ -386,7 +385,7 @@ namespace GlacierTextConverter.Model
                         var offsetAtEndOfSection = writer.BaseStream.Position;
                         var sectionLength = offsetAtEndOfSection - offsetAtBeginningOfSection - 4;
 
-                        if (sectionLength == 4)
+                        if (_version == HitmanVersion.Version2 && sectionLength == 4)
                         {
                             sectionLength = 0;
                         }

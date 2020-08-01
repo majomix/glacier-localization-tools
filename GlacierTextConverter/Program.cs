@@ -19,7 +19,7 @@ namespace GlacierTextConverter
         static void Main(string[] args)
         {
             bool export = true;
-            var separateDirectories = true;
+            var separateDirectories = false;
             string sourceDirectory = null;
             string directory = Directory.GetCurrentDirectory();
             var version = HitmanVersion.Version1;
@@ -58,21 +58,22 @@ namespace GlacierTextConverter
                 converter.WriteDlgeFolder(directory, separateDirectories, @"EGLD");
                 converter.WriteRtlvFolder(directory, separateDirectories, @"VLTR");
             }
+        }
 
-            //var entryPoint = @"D:\Preklady\Hitman 2\backup\";
-            //var compareWith = @"D:\Preklady\Hitman 2\lokalizacia\";
-
-            //var list = new List<string>();
-            //foreach (var filePath in Directory.GetFiles(entryPoint, "*", SearchOption.AllDirectories))
-            //{
-            //    var comparePath = filePath.Replace(entryPoint, compareWith);
-            //    var original = File.ReadAllBytes(filePath);
-            //    var rewritten = File.ReadAllBytes(comparePath);
-            //    if (!original.SequenceEqual(rewritten))
-            //    {
-            //        list.Add(comparePath);
-            //    }
-            //}
+        private void CompareContent(string entryPoint, string compareWith)
+        {
+            var list = new List<string>();
+            foreach (var filePath in Directory.GetFiles(entryPoint, "*", SearchOption.AllDirectories))
+            {
+                var comparePath = filePath.Replace(entryPoint, compareWith);
+                var original = File.ReadAllBytes(filePath);
+                var rewritten = File.ReadAllBytes(comparePath);
+                if (!original.SequenceEqual(rewritten))
+                {
+                    list.Add(comparePath);
+                }
+            }
         }
     }
+
 }
