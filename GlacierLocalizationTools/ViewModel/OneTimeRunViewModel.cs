@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace GlacierLocalizationTools.ViewModel
 {
@@ -16,6 +17,7 @@ namespace GlacierLocalizationTools.ViewModel
         private string myTargetDirectory;
         public bool? Export { get; set; }
         public bool TextsOnly { get; set; }
+        public bool SeparateDirectories { get; set; }
         public bool Repack { get; set; }
         public ICommand ExtractByParameterCommand { get; private set; }
         public ICommand ImportByParameterCommand { get; private set; }
@@ -36,6 +38,7 @@ namespace GlacierLocalizationTools.ViewModel
                 .Add("import", value => Export = false)
                 .Add("runtime=", value => mySourceDirectory = CreateFullPath(value, true))
                 .Add("userdata=", value => myTargetDirectory = CreateFullPath(value, true))
+                .Add("separatedirs", value => SeparateDirectories = true)
                 .Add("textsonly", value => TextsOnly = true)
                 .Add("repack", value => Repack = true);
 
@@ -57,7 +60,16 @@ namespace GlacierLocalizationTools.ViewModel
                         function = entry => entry.Info.Signature == "EGLD" || entry.Info.Signature == "RCOL" || entry.Info.Signature == "VLTR";
                     }
 
-                    ExtractFile(myTargetDirectory, function);
+                    string finalDirectory = myTargetDirectory;
+                    if (SeparateDirectories)
+                    {
+                        finalDirectory += @"\";
+                        var filename = Path.GetFileNameWithoutExtension(file);
+                        var split = filename.Split(new [] { @"patch" }, StringSplitOptions.None);
+                        finalDirectory += split.Length == 1 ? filename : split[0];
+;                   }
+                    
+                    ExtractFile(finalDirectory, function);
                 }
             }
         }

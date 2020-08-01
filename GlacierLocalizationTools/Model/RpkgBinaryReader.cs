@@ -15,12 +15,15 @@ namespace GlacierLocalizationTools.Model
 
         public RpkgFileStructure ReadHeader()
         {
-            RpkgFileStructure rpkgFile = new RpkgFileStructure();
+            var rpkgFile = new RpkgFileStructure();
 
             rpkgFile.Signature = new string(ReadChars(4));
             rpkgFile.NumberOfFiles = ReadUInt32();
             rpkgFile.ResourceTableOffset = ReadUInt32();
             rpkgFile.ResourceTableSize = ReadUInt32();
+
+            if (rpkgFile.NumberOfFiles == 0)
+                return rpkgFile;
 
             if (myVersion == 0)
             {
