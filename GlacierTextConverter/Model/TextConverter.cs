@@ -97,6 +97,7 @@ namespace GlacierTextConverter.Model
 
                 reader.ReadHeader();
                 int iteration = 0;
+                var hasAnyStrings = false;
                 while (reader.HasText())
                 {
                     structure = reader.ReadStructure(iteration);
@@ -120,17 +121,19 @@ namespace GlacierTextConverter.Model
                         }
                     }
 
-                    if (nonEmptyStrings == 0)
+                    if (nonEmptyStrings != 0)
                     {
-                        if (iteration == 0)
-                        {
-                            throw new InvalidDataException("No text inside dialogue file.");
-                        }
+                        hasAnyStrings = true;
                     }
 
                     dlgeFile.Structures.Add(structure);
 
                     iteration++;
+                }
+
+                if (!hasAnyStrings)
+                {
+                    throw new InvalidDataException("No text inside dialogue file.");
                 }
 
                 reader.BaseStream.Seek(-1, SeekOrigin.Current);
