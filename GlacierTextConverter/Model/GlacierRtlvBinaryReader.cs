@@ -6,9 +6,12 @@ namespace GlacierTextConverter.Model
 {
     public class GlacierRtlvBinaryReader : BinaryReader
     {
-        public GlacierRtlvBinaryReader(FileStream fileStream, Encoding encoding)
-            : base(fileStream, encoding)
+        private readonly HitmanVersion _version;
+
+        public GlacierRtlvBinaryReader(FileStream fileStream, HitmanVersion version)
+            : base(fileStream)
         {
+            _version = version;
         }
 
         public RtlvTextFile ReadFile()
@@ -16,13 +19,35 @@ namespace GlacierTextConverter.Model
             var file = new RtlvTextFile();
             var cypherStrategy = new CypherStrategyTEA();
 
+            BaseStream.Seek(24, SeekOrigin.Begin);
+
+            var staticContext1Size = 0;
+            var check = ReadInt32();
+            if (check == 136)
+            {
+                staticContext1Size = 168;
+            }
+            else if (check == 120)
+            {
+                staticContext1Size = 140;
+            }
+            else
+            {
+                throw new Exception();
+            }
+
+            BaseStream.Seek(88, SeekOrigin.Begin);
+            var startOfLanguageSections = ReadInt32() + 12;
+            BaseStream.Seek(0, SeekOrigin.Begin);
+
             file.Header = ReadBytes(8);
             file.FileSize = this.ReadUInt32BE();
-            file.StaticContext = ReadBytes(168);
+            file.StaticContext = ReadBytes(staticContext1Size);
             file.Identifier = ReadUInt32();
-            file.StaticContext2 = ReadBytes(360);
+            file.StaticContext2 = ReadBytes(startOfLanguageSections - (int)BaseStream.Position);
+            var numberOfLanguages = ReadUInt32();
 
-            for (var i = 0; i < 12; i++)
+            for (var i = 0; i < numberOfLanguages; i++)
             {
                 var section = new RtvlLanguageSection();
                 section.SectionLength = ReadInt16();
@@ -33,7 +58,7 @@ namespace GlacierTextConverter.Model
                 file.Sections.Add(section);
             }
 
-            for (var i = 0; i < 12; i++)
+            for (var i = 0; i < numberOfLanguages; i++)
             {
                 var length = ReadInt32();
                 byte[] bytes = ReadBytes(length);

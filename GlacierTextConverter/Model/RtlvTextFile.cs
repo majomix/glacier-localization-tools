@@ -13,6 +13,7 @@ namespace GlacierTextConverter.Model
         public List<RtvlLanguageSection> Sections;
         public string Name;
         public byte[] Extra;
+        public string Category;
 
         public RtlvTextFile()
         {

@@ -8,8 +8,8 @@ namespace GlacierTextConverter.Model
     {
         private ICypherStrategy myStrategy;
 
-        public GlacierRtlvBinaryWriter(FileStream fileStream, Encoding encoding)
-            : base(fileStream, encoding)
+        public GlacierRtlvBinaryWriter(FileStream fileStream)
+            : base(fileStream)
         {
             myStrategy = new CypherStrategyTEA();
         }
@@ -21,8 +21,9 @@ namespace GlacierTextConverter.Model
             Write(file.StaticContext);
             Write(file.Identifier);
             Write(file.StaticContext2);
+            Write(file.Sections.Count);
 
-            for (var i = 0; i < 12; i++)
+            for (var i = 0; i < file.Sections.Count; i++)
             {
                 Write(file.Sections[i].SectionLength);
                 Write(file.Sections[i].Unknown);

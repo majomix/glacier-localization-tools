@@ -4,18 +4,34 @@ using System.Linq;
 
 namespace GlacierTextConverter.Model
 {
-    public class GlacierLocrBinaryReader : BinaryReader
+    public sealed class GlacierLocrBinaryReader : BinaryReader
     {
         public int NumberOfLanguages { get; private set; }
         public ICypherStrategy CypherStrategy { get; private set; }
 
-        public GlacierLocrBinaryReader(FileStream fileStream, Encoding encoding)
-            : base(fileStream, encoding)
+        public GlacierLocrBinaryReader(FileStream fileStream, HitmanVersion version, LocrTextFile file)
+            : base(fileStream)
         {
-            int initialOffset = ReadInt32();
-            NumberOfLanguages = initialOffset / 4;
-            SetDefaultStrategy();
-            fileStream.Seek(0, SeekOrigin.Begin);
+            switch (version)
+            {
+                case HitmanVersion.Version1:
+                {
+                    int initialOffset = ReadInt32();
+                    NumberOfLanguages = initialOffset / 4;
+                    SetDefaultStrategy();
+                    fileStream.Seek(0, SeekOrigin.Begin);
+                    } 
+                    break;
+                case HitmanVersion.Version2: 
+                {
+                    file.HeaderValue = ReadByte();
+                    int initialOffset = ReadInt32();
+                    NumberOfLanguages = (initialOffset - 1) / 4;
+                    CypherStrategy = new CypherStrategyTEA();
+                    fileStream.Seek(1, SeekOrigin.Begin);
+                    }
+                    break;
+            }
         }
 
         public override string ReadString()

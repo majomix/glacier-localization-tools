@@ -6,11 +6,13 @@ namespace GlacierTextConverter.Model
 {
     public class GlacierLocrBinaryWriter : BinaryWriter
     {
+        private readonly HitmanVersion _version;
         private ICypherStrategy myStrategy;
 
-        public GlacierLocrBinaryWriter(FileStream fileStream, Encoding encoding, ICypherStrategy cypherStrategy)
-            : base(fileStream, encoding)
+        public GlacierLocrBinaryWriter(FileStream fileStream, HitmanVersion version, ICypherStrategy cypherStrategy)
+            : base(fileStream)
         {
+            _version = version;
             myStrategy = cypherStrategy;
         }
 
@@ -21,6 +23,14 @@ namespace GlacierTextConverter.Model
             Write(cypheredString.Length);
             Write(cypheredString);
             Write((byte)0);
+        }
+
+        public void WriteHeader(LocrTextFile file)
+        {
+            if (file.HeaderValue != null)
+            {
+                Write(file.HeaderValue.Value);
+            }
         }
     }
 }

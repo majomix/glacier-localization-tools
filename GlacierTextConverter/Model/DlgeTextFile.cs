@@ -8,6 +8,7 @@ namespace GlacierTextConverter.Model
         public string Name { get; set; }
         public List<DlgeStructure> Structures { get; set; }
         public byte[] Extra { get; set; }
+        public string Category { get; set; }
 
         public DlgeTextFile()
         {
@@ -20,5 +21,6 @@ namespace GlacierTextConverter.Model
         public UInt32 Identifier { get; set; }
         public Int32 Category { get; set; }
         public string[] Dialogues { get; set; }
+        public bool MetaDataNegative { get; set; }
     }
 }

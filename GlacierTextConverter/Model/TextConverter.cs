@@ -3,45 +3,50 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Microsoft.Win32;
 
 namespace GlacierTextConverter.Model
 {
     public class TextConverter
     {
+        private readonly HitmanVersion _version;
         public List<LocrTextFile> LocrFiles { get; }
         public List<DlgeTextFile> DlgeFiles { get; }
         public List<RtlvTextFile> RtlvFiles { get; }
         private readonly Dictionary<UInt32, HashHolder> _replacement;
+        private readonly List<string> _categories;
 
-        public TextConverter()
+        public TextConverter(HitmanVersion version)
         {
+            _version = version;
             LocrFiles = new List<LocrTextFile>();
             DlgeFiles = new List<DlgeTextFile>();
             RtlvFiles = new List<RtlvTextFile>();
             _replacement = new Dictionary<UInt32, HashHolder>();
+            _categories = new List<string>();
         }
 
-        public void LoadLocrFolder(string directory)
+        public void LoadLocrFolder(string directory, bool groupByDirectories, string categoryDirectory)
         {
-            LoadGameDataFolder(directory, filePath => LocrFiles.Add(LoadLocrFile(filePath)));
+            LoadGameDataFolder(directory, groupByDirectories, categoryDirectory, (filePath, category) => LocrFiles.Add(LoadLocrFile(filePath, category)));
         }
 
-        public void LoadDlgeFolder(string directory)
+        public void LoadDlgeFolder(string directory, bool groupByDirectories, string categoryDirectory)
         {
-            LoadGameDataFolder(directory, filePath => DlgeFiles.Add(LoadDlgeFile(filePath)));
+            LoadGameDataFolder(directory, groupByDirectories, categoryDirectory, (filePath, category) => DlgeFiles.Add(LoadDlgeFile(filePath, category)));
         }
 
-        public void LoadRtlvFolder(string directory)
+        public void LoadRtlvFolder(string directory, bool groupByDirectories, string categoryDirectory)
         {
-            LoadGameDataFolder(directory, filePath => RtlvFiles.Add(LoadRtlvFile(filePath)));
+            LoadGameDataFolder(directory, groupByDirectories, categoryDirectory, (filePath, category) => RtlvFiles.Add(LoadRtlvFile(filePath, category)));
         }
 
-        public LocrTextFile LoadLocrFile(string path)
+        public LocrTextFile LoadLocrFile(string path, string category)
         {
-            LocrTextFile file;
+            var file = new LocrTextFile();
 
             using (var openFile = File.Open(path, FileMode.Open))
-            using (var reader = new GlacierLocrBinaryReader(openFile, Encoding.Unicode))
+            using (var reader = new GlacierLocrBinaryReader(openFile, _version, file))
             {
                 var languageSections = new List<LanguageSection>();
 
@@ -70,27 +75,26 @@ namespace GlacierTextConverter.Model
                     }
                 }
 
-                file = new LocrTextFile()
-                {
-                    Name = Path.GetFileName(path),
-                    LanguageSections = languageSections,
-                    CypherStrategy = reader.CypherStrategy
-                };
+                file.Name = Path.GetFileName(path);
+                file.Category = category;
+                file.LanguageSections = languageSections;
+                file.CypherStrategy = reader.CypherStrategy;
             }
 
             return file;
         }
 
-        public DlgeTextFile LoadDlgeFile(string path)
+        public DlgeTextFile LoadDlgeFile(string path, string category)
         {
             var dlgeFile = new DlgeTextFile
             {
-                Name = Path.GetFileName(path)
+                Name = Path.GetFileName(path),
+                Category = category
             };
             DlgeStructure structure;
 
             using (var file = File.Open(path, FileMode.Open))
-            using (var reader = new GlacierDlgeBinaryReader(file, Encoding.Unicode))
+            using (var reader = new GlacierDlgeBinaryReader(file, _version))
             {
                 int numberOfLanguages = 12;
                 ICypherStrategy cypherStrategy = new CypherStrategyTEA();
@@ -114,7 +118,7 @@ namespace GlacierTextConverter.Model
 
                         if (i != numberOfLanguages - 1)
                         {
-                            if (reader.ReadLanguageMetadataAndDetermineIfEmpty(i, iteration))
+                            if (reader.ReadLanguageMetadataAndDetermineIfEmpty(i, iteration, structure))
                             {
                                 i++;
                             }
@@ -143,15 +147,17 @@ namespace GlacierTextConverter.Model
             return dlgeFile;
         }
 
-        public RtlvTextFile LoadRtlvFile(string path)
+        public RtlvTextFile LoadRtlvFile(string path, string category)
         {
             RtlvTextFile file = null;
 
-            using (var reader = new GlacierRtlvBinaryReader(File.Open(path, FileMode.Open), Encoding.Unicode))
+            using (var inFile = File.Open(path, FileMode.Open))
+            using (var reader = new GlacierRtlvBinaryReader(inFile, _version))
             {
                 file = reader.ReadFile();
                 file.Name = Path.GetFileName(path);
                 file.Extra = reader.ReadBytes((int)(reader.BaseStream.Length - reader.BaseStream.Position));
+                file.Category = category;
             }
 
             return file;
@@ -160,12 +166,12 @@ namespace GlacierTextConverter.Model
         public void LoadTextFolder(string directory)
         {
             var slovakContent = File.ReadAllLines(directory + @"\Slovak.txt", Encoding.Unicode);
-            var engliishContent = File.ReadAllLines(directory + @"\English.txt", Encoding.Unicode);
+            var englishContent = File.ReadAllLines(directory + @"\English.txt", Encoding.Unicode);
             
             for (var i = 0; i < slovakContent.Length; i++)
             {
                 var slovakLine = slovakContent[i];
-                var englishLine = engliishContent[i];
+                var englishLine = englishContent[i];
 
                 string[] slovakTokens = slovakLine.Split(new[] { '\t' }, 2);
                 string[] englishTokens = englishLine.Split(new[] { '\t' }, 2);
@@ -184,7 +190,7 @@ namespace GlacierTextConverter.Model
                         }
 
                         holder.Add(englishTokens[1], slovakTokens[1]);
-                    }
+                    } 
                 }
             }
         }
@@ -197,46 +203,74 @@ namespace GlacierTextConverter.Model
 
             foreach (var languagePair in GetLanguageMap())
             {
-                using (StreamWriter writer = new StreamWriter(File.Open(directory + @"\" + languagePair.Key + ".txt", FileMode.Create), Encoding.UTF8))
+                using (var textFile = File.Open(directory + @"\" + languagePair.Key + ".txt", FileMode.Create))
+                using (var writer = new StreamWriter(textFile, Encoding.UTF8))
                 {
-                    foreach (var textEntry in
-                        LocrFiles
-                            .Where(file => file.LanguageSections.Count > languagePair.Value.Item1)
-                            .SelectMany(_ => _.LanguageSections[languagePair.Value.Item1].Entries
-                                .Select(text => new { Identifier = text.Hash, Entry = text.Entry }))
-                        .Concat(DlgeFiles
-                            .SelectMany(_ => _.Structures)
-                            .Select(s => new { Identifier = s.Identifier, Entry = s.Dialogues[languagePair.Value.Item2] }))
-                        .Concat(RtlvFiles.Where(_ => _ != null).Select(_ => new { Identifier = _.Identifier, Entry = _.Sections[languagePair.Value.Item1].Lines.First() }))
-                        .Where(entry => entry.Entry != null)
-                        .GroupBy(entry => entry.Entry))
+                    foreach (var category in _categories.OrderBy(c => c.Length).ThenBy(c => c))
                     {
-                        writer.Write(string.Join(",", textEntry.Select(entry => string.Format("{0:X8}", entry.Identifier)).Distinct()));
-                        writer.Write("\t");
-                        writer.WriteLine(textEntry.Key.Replace("\r\n", "\\n"));
+                        writer.WriteLine($"[{category}]");
+
+                        foreach (var textEntry in
+                            LocrFiles
+                                .Where(file => file.Category == category && file.LanguageSections.Count > languagePair.Value.Item1)
+                                .SelectMany(_ => _.LanguageSections[languagePair.Value.Item1].Entries
+                                    .Select(text => new {Identifier = text.Hash, Entry = text.Entry}))
+                                .Concat(DlgeFiles
+                                    .Where(file => file.Category == category)
+                                    .SelectMany(_ => _.Structures)
+                                    .Select(s => new
+                                        {Identifier = s.Identifier, Entry = s.Dialogues[languagePair.Value.Item2]}))
+                                .Concat(RtlvFiles.Where(_ => _ != null && _.Category == category).Select(_ => new
+                                {
+                                    Identifier = _.Identifier,
+                                    Entry = _.Sections[languagePair.Value.Item1].Lines.First()
+                                }))
+                                .Where(entry => entry.Entry != null)
+                                .GroupBy(entry => entry.Entry))
+                        {
+                            writer.Write(string.Join(",",
+                                textEntry.Select(entry => string.Format("{0:X8}", entry.Identifier)).Distinct()));
+                            writer.Write("\t");
+                            writer.WriteLine(textEntry.Key.Replace("\r\n", "\\n"));
+                        }
                     }
                 }
             }
         }
 
-        public void WriteLocrFolder(string directory)
+        public void WriteLocrFolder(string directory, bool groupByDirectories, string categoryDirectory)
         {
             if (LocrFiles == null) return;
 
-            Directory.CreateDirectory(directory);
-
-            foreach(LocrTextFile file in LocrFiles)
+            if (groupByDirectories)
             {
-                using (GlacierLocrBinaryWriter writer = new GlacierLocrBinaryWriter(File.Open(directory + @"\" + file.Name, FileMode.Create), Encoding.UTF8, file.CypherStrategy))
+                foreach (var category in _categories)
                 {
-                    bool isEmpty = file.LanguageSections.All(section => section.Entries.Count == 0);
+                    Directory.CreateDirectory($@"{directory}\{category}\{categoryDirectory}");
+                }
+            }
+            else
+            {
+                Directory.CreateDirectory($@"{directory}\{categoryDirectory}");
+            }
+
+            foreach (var file in LocrFiles)
+            {
+                var path = directory + (groupByDirectories ? $@"\{file.Category}\" : @"\") + categoryDirectory + @"\" + file.Name;
+
+                using (var fileHandle = File.Open(path, FileMode.Create))
+                using (var writer = new GlacierLocrBinaryWriter(fileHandle, _version, file.CypherStrategy))
+                {
+                    var isEmpty = file.LanguageSections.All(section => section.Entries.Count == 0);
+
+                    writer.WriteHeader(file);
 
                     foreach (var section in file.LanguageSections)
                     {
                         writer.Write((UInt32)0);
                     }
 
-                    foreach (LanguageSection section in file.LanguageSections)
+                    foreach (var section in file.LanguageSections)
                     {
                         if (section.Entries.Count != 0 || isEmpty)
                         {
@@ -244,7 +278,7 @@ namespace GlacierTextConverter.Model
 
                             writer.Write(section.Entries.Count);
 
-                            foreach (TextEntry entry in section.Entries)
+                            foreach (var entry in section.Entries)
                             {
                                 writer.Write(entry.Hash);
                                 writer.Write(GetReplacementString(entry.Entry, entry.Hash, file.LanguageSections[GetLanguageMap()["English"].Item1] == section));
@@ -256,7 +290,13 @@ namespace GlacierTextConverter.Model
                         }
                     }
 
-                    writer.BaseStream.Seek(0, SeekOrigin.Begin);
+                    var startPos = 0;
+                    if (file.HeaderValue.HasValue)
+                    {
+                        startPos = 1;
+                    }
+                    writer.BaseStream.Seek(startPos, SeekOrigin.Begin);
+
                     foreach (var section in file.LanguageSections)
                     {
                         writer.Write(section.StartingOffset);
@@ -265,17 +305,28 @@ namespace GlacierTextConverter.Model
             }
         }
 
-        public void WriteDlgeFolder(string directory)
+        public void WriteDlgeFolder(string directory, bool groupByDirectories, string categoryDirectory)
         {
             if (DlgeFiles == null) return;
 
-            Directory.CreateDirectory(directory);
+            if (groupByDirectories)
+            {
+                foreach (var category in _categories)
+                {
+                    Directory.CreateDirectory($@"{directory}\{category}\{categoryDirectory}");
+                }
+            }
+            else
+            {
+                Directory.CreateDirectory($@"{directory}\{categoryDirectory}");
+            }
 
             foreach (var dlgeFile in DlgeFiles)
             {
-                using (var file = File.Open(directory + @"\" + dlgeFile.Name, FileMode.Create))
+                var path = directory + (groupByDirectories ? $@"\{dlgeFile.Category}\" : @"\") + categoryDirectory + @"\" + dlgeFile.Name;
+                using (var file = File.Open(path, FileMode.Create))
                 {
-                    using (var writer = new GlacierDlgeBinaryWriter(file, Encoding.UTF8))
+                    using (var writer = new GlacierDlgeBinaryWriter(file, _version))
                     {
                         writer.WriteHeader();
 
@@ -291,7 +342,7 @@ namespace GlacierTextConverter.Model
                                 writer.Write(finalString);
                                 if (finalString != null && i != structure.Dialogues.Length - 1)
                                 {
-                                    writer.WriteTrailingBytes(i, iteration);
+                                    writer.WriteTrailingBytes(i, iteration, structure);
                                 }
                             }
                         }
@@ -302,15 +353,28 @@ namespace GlacierTextConverter.Model
             }
         }
 
-        public void WriteRtlvFolder(string directory)
+        public void WriteRtlvFolder(string directory, bool groupByDirectories, string categoryDirectory)
         {
             if (RtlvFiles == null) return;
 
-            Directory.CreateDirectory(directory);
+            if (groupByDirectories)
+            {
+                foreach (var category in _categories)
+                {
+                    Directory.CreateDirectory($@"{directory}\{category}\{categoryDirectory}");
+                }
+            }
+            else
+            {
+                Directory.CreateDirectory($@"{directory}\{categoryDirectory}");
+            }
 
             foreach (var file in RtlvFiles)
             {
-                using (var writer = new GlacierRtlvBinaryWriter(File.Open(directory + @"\" + file.Name, FileMode.Create), Encoding.UTF8))
+                var path = directory + (groupByDirectories ? $@"\{file.Category}\" : @"\") + categoryDirectory + @"\" + file.Name;
+
+                using (var fileHandle = File.Open(path, FileMode.Create))
+                using (var writer = new GlacierRtlvBinaryWriter(fileHandle))
                 {
                     writer.Write(file);
 
@@ -321,6 +385,11 @@ namespace GlacierTextConverter.Model
                         writer.Write(finalString);
                         var offsetAtEndOfSection = writer.BaseStream.Position;
                         var sectionLength = offsetAtEndOfSection - offsetAtBeginningOfSection - 4;
+
+                        if (sectionLength == 4)
+                        {
+                            sectionLength = 0;
+                        }
 
                         file.Sections[i].StartingOffset = (int)offsetAtBeginningOfSection - 12;
                         file.Sections[i].SectionLength = (short)sectionLength;
@@ -356,18 +425,48 @@ namespace GlacierTextConverter.Model
             };
         }
 
-        private void LoadGameDataFolder(string directory, Action<string> action)
+        private void LoadGameDataFolder(string directory, bool groupByDirectories, string categoryDirectory, Action<string, string> action)
         {
-            foreach (string filePath in Directory.GetFiles(directory, "*", SearchOption.AllDirectories))
+            if (!groupByDirectories)
             {
-                try
+                foreach (string filePath in Directory.GetFiles(directory + @"\" + categoryDirectory, "*", SearchOption.AllDirectories))
                 {
-                    action(filePath);
+                    try
+                    {
+                        action(filePath, null);
+                    }
+                    catch (Exception)
+                    {
+                        //File.Delete(filePath);
+                        Console.WriteLine(filePath);
+                    }
                 }
-                catch (Exception)
+            }
+            else
+            {
+                foreach (var subdirectory in Directory.GetDirectories(directory))
                 {
-                    //File.Delete(filePath);
-                    Console.WriteLine(filePath);
+                    var category = subdirectory.Split(new [] { directory + @"\" }, StringSplitOptions.RemoveEmptyEntries)[0];
+
+                    if (!_categories.Contains(category))
+                    {
+                        _categories.Add(category);
+                    }
+
+                    foreach (var filePath in Directory.GetFiles(subdirectory + @"\" + categoryDirectory, "*", SearchOption.AllDirectories))
+                    {
+                        try
+                        {
+                            action(filePath, category);
+                        }
+                        catch (Exception e)
+                        {
+                            File.Delete(filePath);
+                            //var name = Path.GetFileName(filePath);
+                            //File.Copy(filePath, @"D:\deleted\" + name);
+                            //Console.WriteLine(filePath);
+                        }
+                    }
                 }
             }
         }

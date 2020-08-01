@@ -7,9 +7,12 @@ namespace GlacierTextConverter
 {
     public class GlacierDlgeBinaryReader : BinaryReader
     {
-        public GlacierDlgeBinaryReader(FileStream fileStream, Encoding encoding)
-            : base(fileStream, encoding)
+        private readonly HitmanVersion _version;
+
+        public GlacierDlgeBinaryReader(FileStream fileStream, HitmanVersion version)
+            : base(fileStream)
         {
+            _version = version;
         }
 
         public string ReadString(ICypherStrategy cypherStrategy)
@@ -19,24 +22,37 @@ namespace GlacierTextConverter
             return cypherStrategy.Decypher(bytes);
         }
 
-        public bool ReadLanguageMetadataAndDetermineIfEmpty(int i, int iteration)
+        public bool ReadLanguageMetadataAndDetermineIfEmpty(int i, int iteration, DlgeStructure structure)
         {
-            ConfirmEquality(ReadInt32(), 0);
-
-            if(i == 9)
+            if (_version == HitmanVersion.Version1)
             {
-                ConfirmEquality(ReadInt32(), 4 + iteration * 4);
-                ConfirmEquality(ReadInt32(), 5 + iteration * 4);
+                ConfirmEquality(ReadInt32(), 0);
+            }
+
+            if (i == 9)
+            {
+                var first = ReadInt32();
+                var second = ReadInt32();
+                if (first == -1 && second == -1)
+                {
+                    structure.MetaDataNegative = true;
+                }
+                else if ((first == 4 + iteration * 4) && (second == 5 + iteration * 4))
+                {
+                    structure.MetaDataNegative = false;
+                }
+                else
+                {
+                    throw new InvalidDataException();
+                }
 
                 return true;
             }
-            else
-            {
-                ConfirmEquality(ReadInt32(), -1);
-                ConfirmEquality(ReadInt32(), -1);
+            
+            ConfirmEquality(ReadInt32(), -1);
+            ConfirmEquality(ReadInt32(), -1);
 
-                return false;
-            }
+            return false;
         }
 
         public bool ReadHeader()
@@ -55,7 +71,14 @@ namespace GlacierTextConverter
             structure.Identifier = ReadUInt32();
             ConfirmEquality(ReadInt32(), 0);
             ConfirmEquality(ReadInt64(), -1);
-            ConfirmEquality(ReadInt64(), 0);
+
+            ConfirmEquality(ReadInt32(), 0);
+
+            if (_version == HitmanVersion.Version1)
+            {
+                ConfirmEquality(ReadInt32(), 0);
+            }
+
             ConfirmEquality(ReadInt32(), 2 + iteration * 4);
             ConfirmEquality(ReadInt32(), 3 + iteration * 4);
 
