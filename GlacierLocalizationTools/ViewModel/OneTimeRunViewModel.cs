@@ -54,9 +54,10 @@ namespace GlacierLocalizationTools.ViewModel
                     LoadStructure();
 
                     Func<RpkgEntry, bool> function = entry => true;
-                    if(TextsOnly)
+
+                    if (TextsOnly)
                     {
-                        function = entry => entry.Info.Signature == "EGLD" || entry.Info.Signature == "RCOL" || entry.Info.Signature == "VLTR";
+                        function = entry => new[] { "FXFG", "EGLD", "RCOL", "VLTR" }.Contains(entry.Info.Signature);
                     }
 
                     string finalDirectory = _targetDirectory;

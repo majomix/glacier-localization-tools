@@ -205,21 +205,49 @@ namespace GlacierTextConverter.Model
                 using (var textFile = File.Open(directory + @"\" + languagePair.Key + ".txt", FileMode.Create))
                 using (var writer = new StreamWriter(textFile, Encoding.Unicode))
                 {
-                    foreach (var category in _categories.OrderBy(c => c.Length).ThenBy(c => c))
+                    if (_categories.Count > 0)
                     {
-                        writer.WriteLine($"[{category}]");
+                        foreach (var category in _categories.OrderBy(c => c.Length).ThenBy(c => c))
+                        {
+                            writer.WriteLine($"[{category}]");
 
+                            foreach (var textEntry in
+                                LocrFiles
+                                    .Where(file => file.Category == category && file.LanguageSections.Count > languagePair.Value.Item1)
+                                    .SelectMany(_ => _.LanguageSections[languagePair.Value.Item1].Entries
+                                        .Select(text => new { Identifier = text.Hash, Entry = text.Entry }))
+                                    .Concat(DlgeFiles
+                                        .Where(file => file.Category == category)
+                                        .SelectMany(_ => _.Structures)
+                                        .Select(s => new
+                                            { Identifier = s.Identifier, Entry = s.Dialogues[languagePair.Value.Item2] }))
+                                    .Concat(RtlvFiles.Where(_ => _ != null && _.Category == category).Select(_ => new
+                                    {
+                                        Identifier = _.Identifier,
+                                        Entry = _.Sections[languagePair.Value.Item1].Lines.First()
+                                    }))
+                                    .Where(entry => entry.Entry != null)
+                                    .GroupBy(entry => entry.Entry))
+                            {
+                                writer.Write(string.Join(",",
+                                    textEntry.Select(entry => string.Format("{0:X8}", entry.Identifier)).Distinct()));
+                                writer.Write("\t");
+                                writer.WriteLine(textEntry.Key.Replace("\r\n", "\\n"));
+                            }
+                        }
+                    }
+                    else
+                    {
                         foreach (var textEntry in
                             LocrFiles
-                                .Where(file => file.Category == category && file.LanguageSections.Count > languagePair.Value.Item1)
+                                .Where(file => file.LanguageSections.Count > languagePair.Value.Item1)
                                 .SelectMany(_ => _.LanguageSections[languagePair.Value.Item1].Entries
                                     .Select(text => new {Identifier = text.Hash, Entry = text.Entry}))
                                 .Concat(DlgeFiles
-                                    .Where(file => file.Category == category)
                                     .SelectMany(_ => _.Structures)
                                     .Select(s => new
                                         {Identifier = s.Identifier, Entry = s.Dialogues[languagePair.Value.Item2]}))
-                                .Concat(RtlvFiles.Where(_ => _ != null && _.Category == category).Select(_ => new
+                                .Concat(RtlvFiles.Where(_ => _ != null).Select(_ => new
                                 {
                                     Identifier = _.Identifier,
                                     Entry = _.Sections[languagePair.Value.Item1].Lines.First()
@@ -227,8 +255,7 @@ namespace GlacierTextConverter.Model
                                 .Where(entry => entry.Entry != null)
                                 .GroupBy(entry => entry.Entry))
                         {
-                            writer.Write(string.Join(",",
-                                textEntry.Select(entry => string.Format("{0:X8}", entry.Identifier)).Distinct()));
+                            writer.Write(string.Join(",", textEntry.Select(entry => string.Format("{0:X8}", entry.Identifier)).Distinct()));
                             writer.Write("\t");
                             writer.WriteLine(textEntry.Key.Replace("\r\n", "\\n"));
                         }
