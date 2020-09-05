@@ -2,7 +2,6 @@
 using NDesk.Options;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -11,6 +10,7 @@ namespace GlacierTextConverter
     public enum HitmanVersion
     {
         Version1,
+        Version1Epic,
         Version2
     }
 
@@ -32,6 +32,7 @@ namespace GlacierTextConverter
             .Add("dir=", value => directory = value)
             .Add("source=", value => sourceDirectory = value)
             .Add("separatedirs", value => separateDirectories = true)
+            .Add("v1e", value => version = HitmanVersion.Version1Epic)
             .Add("v2", value => version = HitmanVersion.Version2);
 
             options.Parse(Environment.GetCommandLineArgs());

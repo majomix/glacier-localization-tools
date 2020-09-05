@@ -434,21 +434,44 @@ namespace GlacierTextConverter.Model
 
         public Dictionary<string, Tuple<int, int>> GetLanguageMap()
         {
-            return new Dictionary<string, Tuple<int, int>>()
+            switch (_version)
             {
-                { "Empty", new Tuple<int, int>(0, 10) },
-                { "English", new Tuple<int, int>(1, 0) },
-                { "French", new Tuple<int, int>(2, 1 )},
-                { "Italian", new Tuple<int, int>(3, 2) },
-                { "German", new Tuple<int, int>(4, 3) },
-                { "Spanish", new Tuple<int, int>(5, 4) },
-                { "Russian", new Tuple<int, int>(6, 5) },
-                { "Mexican", new Tuple<int, int>(7, 6) },
-                { "Portugese", new Tuple<int, int>(8, 7) },
-                { "Polish", new Tuple<int, int>(9, 8) },
-                { "Japanese", new Tuple<int, int>(10, 9) },
-                { "Chinese", new Tuple<int, int>(0, 11) },
-            };
+                case HitmanVersion.Version1:
+                case HitmanVersion.Version2:
+                    return new Dictionary<string, Tuple<int, int>>()
+                    {
+                        { "Empty", new Tuple<int, int>(0, 10) },
+                        { "English", new Tuple<int, int>(1, 0) },
+                        { "French", new Tuple<int, int>(2, 1 )},
+                        { "Italian", new Tuple<int, int>(3, 2) },
+                        { "German", new Tuple<int, int>(4, 3) },
+                        { "Spanish", new Tuple<int, int>(5, 4) },
+                        { "Russian", new Tuple<int, int>(6, 5) },
+                        { "Mexican", new Tuple<int, int>(7, 6) },
+                        { "Portugese", new Tuple<int, int>(8, 7) },
+                        { "Polish", new Tuple<int, int>(9, 8) },
+                        { "Japanese", new Tuple<int, int>(10, 9) },
+                        { "Chinese", new Tuple<int, int>(0, 11) },
+                    };
+                case HitmanVersion.Version1Epic:
+                    return new Dictionary<string, Tuple<int, int>>()
+                    {
+                        { "Empty", new Tuple<int, int>(0, 0) },
+                        { "English", new Tuple<int, int>(1, 1) },
+                        { "French", new Tuple<int, int>(2, 2)},
+                        { "Italian", new Tuple<int, int>(3, 3) },
+                        { "German", new Tuple<int, int>(4, 4) },
+                        { "Spanish", new Tuple<int, int>(5, 5) },
+                        { "Russian", new Tuple<int, int>(6, 6) },
+                        { "Mexican", new Tuple<int, int>(7, 7) },
+                        { "Portugese", new Tuple<int, int>(8, 8) },
+                        { "Polish", new Tuple<int, int>(9, 9) },
+                        { "Japanese", new Tuple<int, int>(10, 10) },
+                        { "Chinese", new Tuple<int, int>(0, 11) },
+                    };
+                default:
+                    throw new ArgumentException();
+            }
         }
 
         private void LoadGameDataFolder(string directory, bool groupByDirectories, string categoryDirectory, Action<string, string> action)
@@ -463,7 +486,7 @@ namespace GlacierTextConverter.Model
                     }
                     catch (Exception)
                     {
-                        //File.Delete(filePath);
+                        File.Delete(filePath);
                         Console.WriteLine(filePath);
                     }
                 }

@@ -15,6 +15,7 @@ namespace GlacierTextConverter.Model
             switch (version)
             {
                 case HitmanVersion.Version1:
+                case HitmanVersion.Version1Epic:
                 {
                     int initialOffset = ReadInt32();
                     NumberOfLanguages = initialOffset / 4;
