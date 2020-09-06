@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Windows.Controls;
 
 namespace GlacierLocalizationTools.ViewModel
 {
@@ -108,7 +110,7 @@ namespace GlacierLocalizationTools.ViewModel
             }
         }
 
-        public void ResolveNewFiles(string directory, string archiveName)
+        public void ResolveNewFilesFromDisk(string directory, string archiveName)
         {
             string[] infoNames = new string[] { "EGLD", "RCOL", "VLTR", "FXFG" };
             Dictionary<string, Dictionary<UInt64, RpkgEntry>> fileMap = new Dictionary<string, Dictionary<ulong, RpkgEntry>>();
@@ -164,6 +166,69 @@ namespace GlacierLocalizationTools.ViewModel
             }
         }
 
+        public void ResolveNewFilesFromZipFile(string zipFilePath, string archiveName)
+        {
+            var infoNames = new [] { "EGLD", "RCOL", "VLTR", "FXFG" };
+            var fileMap = new Dictionary<string, Dictionary<ulong, RpkgEntry>>();
+
+            foreach (string infoName in infoNames)
+            {
+                fileMap[infoName] = new Dictionary<UInt64, RpkgEntry>();
+            }
+
+            foreach (var entry in Model.Archive.Entries)
+            {
+                if (infoNames.Contains(entry.Info.Signature))
+                {
+                    fileMap[entry.Info.Signature][entry.Hash] = entry;
+                }
+            }
+
+            var prefix = string.Empty;
+            if (archiveName != null)
+            {
+                prefix += archiveName;
+            }
+
+            using (var zipFile = ZipFile.OpenRead(zipFilePath))
+            {
+                var fileList = zipFile.Entries.Select(e => e.FullName).ToList();
+
+                foreach (var entry in zipFile.Entries)
+                {
+                    if (entry.FullName.EndsWith(@"/"))
+                        continue;
+
+                    string sufix = Path.GetFileNameWithoutExtension(LoadedFilePath);
+                    string specificFile = entry.Name + @"_" + sufix;
+                    if (fileList.Contains(specificFile) || (entry.Name.Contains("_") && !entry.Name.EndsWith(sufix)))
+                    {
+                        continue;
+                    }
+
+                    string[] filepath = entry.FullName.Split('/');
+                    if (fileMap.ContainsKey(filepath[0]))
+                    {
+                        var hash = Convert.ToUInt64(entry.Name.Split(new [] { ".dat" }, StringSplitOptions.None)[0], 16);
+                        if (fileMap[filepath[0]].ContainsKey(hash))
+                        {
+                            var currentEntry = fileMap[filepath[0]][hash];
+
+                            if (currentEntry != null)
+                            {
+                                using (var stream = entry.Open())
+                                {
+                                    var buffer = new byte[entry.Length];
+                                    stream.Read(buffer, 0, (int)entry.Length);
+                                    currentEntry.ImportRawData = buffer;
+                                    currentEntry.Info.DecompressedDataSize = (uint)entry.Length;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         public void SaveStructureByRepack(string path)
         {
@@ -197,15 +262,15 @@ namespace GlacierLocalizationTools.ViewModel
             using (var writer = new RpkgBinaryWriter(GetRpkgVersion(LoadedFilePath), file))
             {
                 long currentSize = 0;
-                var entries = Model.Archive.Entries.Where(_ => _.Import != null).ToList();
-                long totalSize = entries.Sum(_ => _.CompressedSize);
+                var entries = Model.Archive.Entries.Where(_ => _.Import != null || _.ImportRawData != null).ToList();
+                long totalSize = entries.Sum(_ => _.Info.DecompressedDataSize);
 
                 foreach (var entry in entries)
                 {
                     Model.AppendDataEntry(writer, entry);
                     CurrentProgress = (int)(currentSize * 100.0 / totalSize);
                     CurrentFile = entry.Hash.ToString();
-                    currentSize += entry.CompressedSize;
+                    currentSize += entry.Info.DecompressedDataSize;
                 }
 
                 Model.UpdateSavedRpkgFileStructure(writer);
@@ -217,7 +282,7 @@ namespace GlacierLocalizationTools.ViewModel
         public string GenerateRandomName()
         {
             Random generator = new Random();
-            return Path.ChangeExtension(LoadedFilePath, @".tmp_" + generator.Next().ToString());
+            return Path.ChangeExtension(LoadedFilePath, @".tmp_" + generator.Next());
         }
 
         public int GetRpkgVersion(string filename)

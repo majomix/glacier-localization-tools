@@ -133,16 +133,15 @@ namespace GlacierLocalizationTools.Model
 
         private void ImportNewFile(RpkgBinaryWriter writer, RpkgEntry rpkgEntry)
         {
-            using (BinaryReader importReader = new BinaryReader(File.Open(rpkgEntry.Import, FileMode.Open)))
+            var rawData = rpkgEntry.ImportRawData ?? File.ReadAllBytes(rpkgEntry.Import);
+
+            if (rpkgEntry.IsCompressed)
             {
-                if (rpkgEntry.IsCompressed)
-                {
-                    rpkgEntry.CompressedSize = writer.WriteCompressedBytes(importReader.ReadBytes((int)rpkgEntry.Info.DecompressedDataSize));
-                }
-                else
-                {
-                    writer.Write(importReader.ReadBytes((int)rpkgEntry.Info.DecompressedDataSize));
-                }
+                rpkgEntry.CompressedSize = writer.WriteCompressedBytes(rawData);
+            }
+            else
+            {
+                writer.Write(rawData);
             }
         }
     }

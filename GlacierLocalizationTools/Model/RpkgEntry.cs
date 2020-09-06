@@ -34,5 +34,6 @@ namespace GlacierLocalizationTools.Model
 
         public bool Extract { get; set; }
         public string Import { get; set; }
+        public byte[] ImportRawData { get; set; }
     }
 }

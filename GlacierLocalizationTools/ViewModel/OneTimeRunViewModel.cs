@@ -18,6 +18,7 @@ namespace GlacierLocalizationTools.ViewModel
         public bool TextsOnly { get; set; }
         public bool SeparateDirectories { get; set; }
         public bool Repack { get; set; }
+        public string ZipFile { get; set; }
         public ICommand ExtractByParameterCommand { get; }
         public ICommand ImportByParameterCommand { get; }
 
@@ -39,7 +40,8 @@ namespace GlacierLocalizationTools.ViewModel
                 .Add("userdata=", value => _targetDirectory = CreateFullPath(value, true))
                 .Add("separatedirs", value => SeparateDirectories = true)
                 .Add("textsonly", value => TextsOnly = true)
-                .Add("repack", value => Repack = true);
+                .Add("repack", value => Repack = true)
+                .Add("zip=", value => ZipFile = CreateFullPath(value, false));
 
             options.Parse(Environment.GetCommandLineArgs());
         }
@@ -78,7 +80,7 @@ namespace GlacierLocalizationTools.ViewModel
         {
             try
             {
-                if (_targetDirectory != null && Directory.Exists(_targetDirectory))
+                if (_sourceDirectory != null && (Directory.Exists(_targetDirectory) || ZipFile != null))
                 {
                     foreach (string file in Directory.GetFiles(_sourceDirectory, "*.rpkg"))
                     {
@@ -87,7 +89,14 @@ namespace GlacierLocalizationTools.ViewModel
                         var filename = Path.GetFileNameWithoutExtension(file);
                         var split = filename.Split(new[] { @"patch" }, StringSplitOptions.None);
 
-                        ResolveNewFiles(_targetDirectory, SeparateDirectories ? split[0] : null);
+                        if (ZipFile != null)
+                        {
+                            ResolveNewFilesFromZipFile(ZipFile, SeparateDirectories ? split[0] : null);
+                        }
+                        else
+                        {
+                            ResolveNewFilesFromDisk(_targetDirectory, SeparateDirectories ? split[0] : null);
+                        }
 
                         if (Repack)
                         {
