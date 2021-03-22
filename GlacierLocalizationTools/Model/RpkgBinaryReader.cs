@@ -18,6 +18,10 @@ namespace GlacierLocalizationTools.Model
             var rpkgFile = new RpkgFileStructure();
 
             rpkgFile.Signature = new string(ReadChars(4));
+            if (rpkgFile.Version == RpkgVersion.Rpkg2)
+            {
+                rpkgFile.Version2ArchiveNumber = ReadBytes(9);
+            }
             rpkgFile.NumberOfFiles = ReadUInt32();
             rpkgFile.ResourceTableOffset = ReadUInt32();
             rpkgFile.ResourceTableSize = ReadUInt32();

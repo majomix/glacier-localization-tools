@@ -22,6 +22,10 @@ namespace GlacierLocalizationTools.Model
         public void Write(RpkgFileStructure header)
         {
             Write(header.Signature);
+            if (header.Version == RpkgVersion.Rpkg2)
+            {
+                Write(header.Version2ArchiveNumber);
+            }
             Write(header.NumberOfFiles);
             Write(header.ResourceTableOffset);
             Write(header.ResourceTableSize);
