@@ -187,32 +187,34 @@ namespace GlacierLocalizationTools.ViewModel
             var prefix = string.Empty;
             if (archiveName != null)
             {
-                prefix += archiveName;
+                prefix += archiveName + "/";
             }
 
             using (var zipFile = ZipFile.OpenRead(zipFilePath))
             {
-                var fileList = zipFile.Entries.Select(e => e.FullName).ToList();
+                var fileList = zipFile.Entries.Select(e => e.FullName).ToDictionary(s => s);
 
                 foreach (var entry in zipFile.Entries)
                 {
                     if (entry.FullName.EndsWith(@"/"))
                         continue;
 
+                    string[] filepath = entry.FullName.Split('/');
+                    var fileCategory = archiveName == null ? filepath[0] : filepath[1];
+
                     string sufix = Path.GetFileNameWithoutExtension(LoadedFilePath);
-                    string specificFile = entry.Name + @"_" + sufix;
-                    if (fileList.Contains(specificFile) || (entry.Name.Contains("_") && !entry.Name.EndsWith(sufix)))
+                    string specificFile = prefix + fileCategory + "/" + entry.Name + @"_" + sufix;
+                    if (fileList.ContainsKey(specificFile) || (entry.Name.Contains("_") && !entry.Name.EndsWith(sufix)))
                     {
                         continue;
                     }
 
-                    string[] filepath = entry.FullName.Split('/');
-                    if (fileMap.ContainsKey(filepath[0]))
+                    if (fileMap.ContainsKey(fileCategory))
                     {
                         var hash = Convert.ToUInt64(entry.Name.Split(new [] { ".dat" }, StringSplitOptions.None)[0], 16);
-                        if (fileMap[filepath[0]].ContainsKey(hash))
+                        if (fileMap[fileCategory].ContainsKey(hash))
                         {
-                            var currentEntry = fileMap[filepath[0]][hash];
+                            var currentEntry = fileMap[fileCategory][hash];
 
                             if (currentEntry != null)
                             {
