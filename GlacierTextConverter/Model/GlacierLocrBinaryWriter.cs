@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Text;
 
 namespace GlacierTextConverter.Model
 {
@@ -7,8 +8,8 @@ namespace GlacierTextConverter.Model
         private readonly HitmanVersion _version;
         private ICypherStrategy myStrategy;
 
-        public GlacierLocrBinaryWriter(FileStream fileStream, HitmanVersion version, ICypherStrategy cypherStrategy)
-            : base(fileStream)
+        public GlacierLocrBinaryWriter(Stream stream, HitmanVersion version, ICypherStrategy cypherStrategy, bool leaveOpen)
+            : base(stream, Encoding.UTF8, leaveOpen)
         {
             _version = version;
             myStrategy = cypherStrategy;

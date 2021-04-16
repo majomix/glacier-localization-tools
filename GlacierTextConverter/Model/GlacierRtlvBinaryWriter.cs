@@ -8,8 +8,8 @@ namespace GlacierTextConverter.Model
     {
         private ICypherStrategy myStrategy;
 
-        public GlacierRtlvBinaryWriter(FileStream fileStream)
-            : base(fileStream)
+        public GlacierRtlvBinaryWriter(Stream fileStream, bool leaveOpen)
+            : base(fileStream, Encoding.UTF8, leaveOpen)
         {
             myStrategy = new CypherStrategyTEA();
         }

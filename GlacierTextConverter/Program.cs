@@ -3,6 +3,7 @@ using NDesk.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 
 namespace GlacierTextConverter
@@ -11,7 +12,8 @@ namespace GlacierTextConverter
     {
         Version1,
         Version1Epic,
-        Version2
+        Version2,
+        Version3
     }
 
     public class Program
@@ -21,6 +23,8 @@ namespace GlacierTextConverter
             bool export = true;
             var separateDirectories = false;
             string sourceDirectory = null;
+            string sourceZip = null;
+            string targetZip = null;
             string directory = Directory.GetCurrentDirectory();
             var version = HitmanVersion.Version1;
 
@@ -31,9 +35,12 @@ namespace GlacierTextConverter
             .Add("import", value => export = false)
             .Add("dir=", value => directory = value)
             .Add("source=", value => sourceDirectory = value)
+            .Add("sourcezip=", value => sourceZip = value)
+            .Add("targetzip=", value => targetZip = value)
             .Add("separatedirs", value => separateDirectories = true)
             .Add("v1e", value => version = HitmanVersion.Version1Epic)
-            .Add("v2", value => version = HitmanVersion.Version2);
+            .Add("v2", value => version = HitmanVersion.Version2)
+            .Add("v3", value => version = HitmanVersion.Version3);
 
             options.Parse(Environment.GetCommandLineArgs());
 
@@ -44,9 +51,33 @@ namespace GlacierTextConverter
 
             TextConverter converter = new TextConverter(version);
 
-            converter.LoadLocrFolder(sourceDirectory, separateDirectories, @"RCOL");
-            converter.LoadDlgeFolder(sourceDirectory, separateDirectories, @"EGLD");
-            converter.LoadRtlvFolder(sourceDirectory, separateDirectories, @"VLTR");
+            if (sourceZip == null && Directory.Exists(sourceDirectory))
+            {
+                Console.WriteLine("Loading RCOL");
+                converter.LoadLocrFolder(sourceDirectory, separateDirectories, @"RCOL");
+                Console.WriteLine("Loading EGLD");
+                converter.LoadDlgeFolder(sourceDirectory, separateDirectories, @"EGLD");
+                Console.WriteLine("Loading VLTR");
+                converter.LoadRtlvFolder(sourceDirectory, separateDirectories, @"VLTR");
+            }
+            else if (File.Exists(sourceZip))
+            {
+                var zipFile = File.ReadAllBytes(sourceZip);
+
+                using (var inMemoryZip = new MemoryStream(zipFile))
+                using (var zipArchive = new ZipArchive(inMemoryZip, ZipArchiveMode.Read))
+                {
+                    var folders = zipArchive.Entries.Select(e => e.FullName.Split('/')[0]).Distinct();
+                    converter.Categories.AddRange(folders);
+
+                    Console.WriteLine("Loading RCOL");
+                    converter.LoadLocrFromZip(zipArchive, separateDirectories, @"RCOL");
+                    Console.WriteLine("Loading EGLD");
+                    converter.LoadDlgeFromZip(zipArchive, separateDirectories, @"EGLD");
+                    Console.WriteLine("Loading VLTR");
+                    converter.LoadRtlvFromZip(zipArchive, separateDirectories, @"VLTR");
+                }
+            }
 
             if (export)
             {
@@ -54,10 +85,40 @@ namespace GlacierTextConverter
             }
             else
             {
+                Console.WriteLine("Loading User Text");
                 converter.LoadTextFolder(directory);
-                converter.WriteLocrFolder(directory, separateDirectories, @"RCOL");
-                converter.WriteDlgeFolder(directory, separateDirectories, @"EGLD");
-                converter.WriteRtlvFolder(directory, separateDirectories, @"VLTR");
+
+                if (targetZip != null)
+                {
+                    using (var inMemoryZip = new MemoryStream())
+                    {
+                        using (var zipArchive = new ZipArchive(inMemoryZip, ZipArchiveMode.Create, true))
+                        {
+                            Console.WriteLine("Writing RCOL");
+                            converter.WriteLocrToZip(zipArchive, separateDirectories, @"RCOL");
+                            Console.WriteLine("Writing EGLD");
+                            converter.WriteDlgeToZip(zipArchive, separateDirectories, @"EGLD");
+                            Console.WriteLine("Writing VLTR");
+                            converter.WriteRtlvToZip(zipArchive, separateDirectories, @"VLTR");
+                        }
+
+                        using (var fileStream = new FileStream(targetZip, FileMode.Create))
+                        {
+                            inMemoryZip.Seek(0, SeekOrigin.Begin);
+                            inMemoryZip.CopyTo(fileStream);
+                        }
+                    }
+
+                }
+                else if (Directory.Exists(directory))
+                {
+                    Console.WriteLine("Writing RCOL");
+                    converter.WriteLocrFolder(directory, separateDirectories, @"RCOL");
+                    Console.WriteLine("Writing EGLD");
+                    converter.WriteDlgeFolder(directory, separateDirectories, @"EGLD");
+                    Console.WriteLine("Writing VLTR");
+                    converter.WriteRtlvFolder(directory, separateDirectories, @"VLTR");
+                }
             }
         }
 

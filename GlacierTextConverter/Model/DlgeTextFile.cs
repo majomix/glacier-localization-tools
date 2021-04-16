@@ -22,5 +22,6 @@ namespace GlacierTextConverter.Model
         public Int32 Category { get; set; }
         public string[] Dialogues { get; set; }
         public bool MetaDataNegative { get; set; }
+        public int ChainId { get; set; }
     }
 }

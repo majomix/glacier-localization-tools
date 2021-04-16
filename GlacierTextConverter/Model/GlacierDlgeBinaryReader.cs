@@ -1,18 +1,18 @@
-﻿using GlacierTextConverter.Model;
-using System;
+﻿using System;
 using System.IO;
-using System.Text;
 
-namespace GlacierTextConverter
+namespace GlacierTextConverter.Model
 {
     public class GlacierDlgeBinaryReader : BinaryReader
     {
         private readonly HitmanVersion _version;
+        private readonly int _numberOfLanguages;
 
-        public GlacierDlgeBinaryReader(FileStream fileStream, HitmanVersion version)
-            : base(fileStream)
+        public GlacierDlgeBinaryReader(Stream stream, HitmanVersion version, int numberOfLanguages)
+            : base(stream)
         {
             _version = version;
+            _numberOfLanguages = numberOfLanguages;
         }
 
         public string ReadString(ICypherStrategy cypherStrategy)
@@ -59,7 +59,7 @@ namespace GlacierTextConverter
                 return false;
             }
 
-            if (((_version == HitmanVersion.Version1 || _version == HitmanVersion.Version2) && i == 9))
+            if (((_version == HitmanVersion.Version1 || _version == HitmanVersion.Version2 || _version == HitmanVersion.Version3) && i == 9))
             {
                 var multiplier = _version == HitmanVersion.Version1Epic ? 6 : 4;
 
@@ -95,7 +95,7 @@ namespace GlacierTextConverter
             return true;
         }
 
-        public DlgeStructure ReadStructure(int iteration)
+        public DlgeStructure ReadStructure(int iteration, bool previousEmpty)
         {
             DlgeStructure structure = new DlgeStructure();
 
@@ -104,8 +104,10 @@ namespace GlacierTextConverter
             ConfirmEquality(ReadInt32(), 0);
 
             var multiplier = _version == HitmanVersion.Version1Epic ? 6 : 4;
+            if ((_version == HitmanVersion.Version2 && previousEmpty) || _version == HitmanVersion.Version3)
+                multiplier = 2;
 
-            if (_version == HitmanVersion.Version1 || _version == HitmanVersion.Version2)
+            if (_version == HitmanVersion.Version1 || _version == HitmanVersion.Version2 || _version == HitmanVersion.Version3)
             {
                 ConfirmEquality(ReadInt64(), -1);
                 ConfirmEquality(ReadInt32(), 0);
@@ -119,7 +121,7 @@ namespace GlacierTextConverter
             ConfirmEquality(ReadInt32(), 2 + iteration * multiplier);
             ConfirmEquality(ReadInt32(), 3 + iteration * multiplier);
 
-            structure.Dialogues = new string[12];
+            structure.Dialogues = new string[_numberOfLanguages];
 
             return structure;
         }

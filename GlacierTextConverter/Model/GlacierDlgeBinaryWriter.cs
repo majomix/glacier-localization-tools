@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 namespace GlacierTextConverter.Model
 {
@@ -8,8 +9,8 @@ namespace GlacierTextConverter.Model
         private readonly HitmanVersion _version;
         private ICypherStrategy myStrategy;
 
-        public GlacierDlgeBinaryWriter(FileStream fileStream, HitmanVersion version)
-            : base(fileStream)
+        public GlacierDlgeBinaryWriter(Stream fileStream, HitmanVersion version, bool leaveOpen)
+            : base(fileStream, Encoding.UTF8, leaveOpen)
         {
             _version = version;
             myStrategy = new CypherStrategyTEA();
@@ -31,16 +32,18 @@ namespace GlacierTextConverter.Model
             Write((Int32)1);
         }
 
-        public void Write(DlgeStructure structure, int iteration)
+        public void Write(DlgeStructure structure, int iteration, bool previousEmpty)
         {
             var multiplier = _version == HitmanVersion.Version1Epic ? 6 : 4;
+            if ((_version == HitmanVersion.Version2 || _version == HitmanVersion.Version3) && previousEmpty)
+                multiplier = 2;
 
             Write((byte)1);
             Write(structure.Category);
             Write(structure.Identifier);
             Write((Int32)0);
 
-            if (_version == HitmanVersion.Version1 || _version == HitmanVersion.Version2)
+            if (_version == HitmanVersion.Version1 || _version == HitmanVersion.Version2 || _version == HitmanVersion.Version3)
             {
                 Write((Int64)(-1));
                 Write((Int32)0);
@@ -78,7 +81,7 @@ namespace GlacierTextConverter.Model
                 return;
             }
 
-            if ((_version == HitmanVersion.Version1 || _version == HitmanVersion.Version2) && i == 9)
+            if ((_version == HitmanVersion.Version1 || _version == HitmanVersion.Version2 || _version == HitmanVersion.Version3) && i == 9)
             {
                 if (structure.MetaDataNegative)
                 {

@@ -1,16 +1,15 @@
 ﻿using System.IO;
-using System.Text;
 using System.Linq;
 
 namespace GlacierTextConverter.Model
 {
     public sealed class GlacierLocrBinaryReader : BinaryReader
     {
-        public int NumberOfLanguages { get; private set; }
+        public int NumberOfLanguages { get; }
         public ICypherStrategy CypherStrategy { get; private set; }
 
-        public GlacierLocrBinaryReader(FileStream fileStream, HitmanVersion version, LocrTextFile file)
-            : base(fileStream)
+        public GlacierLocrBinaryReader(Stream stream, HitmanVersion version, LocrTextFile file)
+            : base(stream)
         {
             switch (version)
             {
@@ -20,18 +19,19 @@ namespace GlacierTextConverter.Model
                     int initialOffset = ReadInt32();
                     NumberOfLanguages = initialOffset / 4;
                     SetDefaultStrategy();
-                    fileStream.Seek(0, SeekOrigin.Begin);
-                    } 
-                    break;
-                case HitmanVersion.Version2: 
+                    stream.Seek(0, SeekOrigin.Begin);
+                } 
+                break;
+                case HitmanVersion.Version2:
+                case HitmanVersion.Version3:
                 {
                     file.HeaderValue = ReadByte();
                     int initialOffset = ReadInt32();
                     NumberOfLanguages = (initialOffset - 1) / 4;
                     CypherStrategy = new CypherStrategyTEA();
-                    fileStream.Seek(1, SeekOrigin.Begin);
-                    }
-                    break;
+                    stream.Seek(1, SeekOrigin.Begin);
+                }
+                break;
             }
         }
 

@@ -22,11 +22,11 @@ namespace GlacierTextConverter.Model
 
         public string GetReplacement(string english)
         {
-            var index = _english.IndexOf(english);
+            var index = _english.LastIndexOf(english);
 
             if (index == -1)
             {
-                Debug.WriteLine(english);
+                //Debug.WriteLine(english);
                 return english;
             }
 

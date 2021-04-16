@@ -1,17 +1,13 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 
 namespace GlacierTextConverter.Model
 {
     public class GlacierRtlvBinaryReader : BinaryReader
     {
-        private readonly HitmanVersion _version;
-
-        public GlacierRtlvBinaryReader(FileStream fileStream, HitmanVersion version)
-            : base(fileStream)
+        public GlacierRtlvBinaryReader(Stream stream, HitmanVersion version)
+            : base(stream)
         {
-            _version = version;
         }
 
         public RtlvTextFile ReadFile()
