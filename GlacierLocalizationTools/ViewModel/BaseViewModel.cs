@@ -5,7 +5,6 @@ using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Windows.Controls;
 
 namespace GlacierLocalizationTools.ViewModel
 {
@@ -290,6 +289,101 @@ namespace GlacierLocalizationTools.ViewModel
         public int GetRpkgVersion(string filename)
         {
             return LoadedFilePath.Contains("patch") ? 1 : 0;
+        }
+
+        public Dictionary<string, Dictionary<ulong, RpkgEntry>> CreateFileMapForPackageGroup(List<string> packages)
+        {
+            var infoNames = new[] { "EGLD", "RCOL", "VLTR", "FXFG" };
+            var fileMap = new Dictionary<string, Dictionary<ulong, RpkgEntry>>();
+
+            foreach (string infoName in infoNames)
+            {
+                fileMap[infoName] = new Dictionary<UInt64, RpkgEntry>();
+            }
+
+            foreach (var file in packages)
+            {
+                LoadedFilePath = file;
+                LoadStructure();
+
+                foreach (var entry in Model.Archive.Entries)
+                {
+                    if (infoNames.Contains(entry.Info.Signature))
+                    {
+                        fileMap[entry.Info.Signature][entry.Hash] = entry;
+                    }
+                }
+            }
+
+            return fileMap;
+        }
+
+        public List<RpkgEntry> LoadZipContent(string packageGroupName, Dictionary<string, Dictionary<ulong, RpkgEntry>> infoMap, string zipPath)
+        {
+            var result = new List<RpkgEntry>();
+
+            using (var zipFile = ZipFile.OpenRead(zipPath))
+            {
+                foreach (var entry in zipFile.Entries.Where(entry => entry.FullName.StartsWith(packageGroupName)))
+                {
+                    if (entry.Length == 0)
+                        continue;
+
+                    string[] filepath = entry.FullName.Split('/');
+                    var fileCategory = filepath[1];
+                    if (infoMap.ContainsKey(fileCategory))
+                    {
+                        var hash = Convert.ToUInt64(entry.Name.Split(new[] { ".dat" }, StringSplitOptions.None)[0], 16);
+                        if (infoMap[fileCategory].ContainsKey(hash))
+                        {
+                            var currentEntry = infoMap[fileCategory][hash];
+
+                            if (currentEntry != null)
+                            {
+                                using (var stream = entry.Open())
+                                {
+                                    var buffer = new byte[entry.Length];
+                                    stream.Read(buffer, 0, (int)entry.Length);
+                                    currentEntry.ImportRawData = buffer;
+                                    currentEntry.Info.DecompressedDataSize = (uint)entry.Length;
+                                }
+
+                                result.Add(currentEntry);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public void SaveStructureByCreatingNewRpkg(string packageGroup, List<RpkgEntry> entries, string path)
+        {
+            var filePath = $@"{path}\{packageGroup}patch9.rpkg";
+
+            using (var file = File.Open(filePath, FileMode.Create, FileAccess.Write))
+            using (var writer = new RpkgBinaryWriter(1, file))
+            {
+                long currentSize = 0;
+                long totalSize = entries.Sum(_ => _.Info.DecompressedDataSize);
+
+                Model.InitializeHeader(entries);
+                Model.SaveRpkgFileStructure(writer);
+
+                foreach (var entry in entries)
+                {
+                    entry.Offset = (ulong)writer.BaseStream.Position;
+                    Model.ImportNewFile(writer, entry);
+                    CurrentProgress = (int)(currentSize * 100.0 / totalSize);
+                    CurrentFile = entry.Hash.ToString();
+                    currentSize += entry.Info.DecompressedDataSize;
+                }
+
+                Model.UpdateSavedRpkgFileStructure(writer);
+            }
+
+            OnPropertyChanged("Model");
         }
     }
 }

@@ -35,9 +35,13 @@ namespace GlacierLocalizationTools.View
                     {
                         oneTimeRunViewModel.ExtractByParameterCommand.Execute(oneTimeRunViewModel);
                     }
-                    else
+                    else if (oneTimeRunViewModel.Export == false && !oneTimeRunViewModel.Build)
                     {
                         oneTimeRunViewModel.ImportByParameterCommand.Execute(oneTimeRunViewModel);
+                    }
+                    else
+                    {
+                        oneTimeRunViewModel.BuildByParameterCommand.Execute(oneTimeRunViewModel);
                     }
                 }
             }

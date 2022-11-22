@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 
 namespace GlacierTextConverter.Model
@@ -198,7 +199,7 @@ namespace GlacierTextConverter.Model
                     numberOfLanguages = 13;
                     break;
                 case HitmanVersion.Version3:
-                    numberOfLanguages = 5;
+                    numberOfLanguages = 9;
                     break;
             }
 
@@ -213,7 +214,8 @@ namespace GlacierTextConverter.Model
 
                 while (reader.HasText())
                 {
-                    var structure = reader.ReadStructure(iteration, dlgeFile.Structures.LastOrDefault()?.MetaDataNegative ?? false);
+                    var structure = reader.ReadStructure(iteration,
+                        dlgeFile.Structures.LastOrDefault()?.MetaDataNegative ?? false);
                     structure.ChainId = DlgeFiles.Count;
                     int nonEmptyStrings = 0;
 
@@ -261,6 +263,7 @@ namespace GlacierTextConverter.Model
                 dlgeFile.Extra = reader.ReadBytes((int)(reader.BaseStream.Length - reader.BaseStream.Position));
             }
 
+
             return dlgeFile;
         }
 
@@ -274,6 +277,11 @@ namespace GlacierTextConverter.Model
                 file.Name = fileNameToSave;
                 file.Extra = reader.ReadBytes((int)(reader.BaseStream.Length - reader.BaseStream.Position));
                 file.Category = category;
+            }
+
+            if (_version == HitmanVersion.Version3 && file.Sections.Count != 10)
+            {
+                throw new InvalidDataException();
             }
 
             return file;
@@ -728,6 +736,10 @@ namespace GlacierTextConverter.Model
                         { "Italian", new Tuple<int, int>(3, 2) },
                         { "German", new Tuple<int, int>(4, 3) },
                         { "Spanish", new Tuple<int, int>(5, 4) },
+                        { "Russian", new Tuple<int, int>(6, 5) },
+                        { "Japenese", new Tuple<int, int>(7, 6) },
+                        { "ChineseMandarin", new Tuple<int, int>(8, 7) },
+                        { "ChineseSimple", new Tuple<int, int>(9, 8) },
                     };
                 default:
                     throw new ArgumentException();
@@ -747,7 +759,6 @@ namespace GlacierTextConverter.Model
                     catch (Exception)
                     {
                         File.Delete(filePath);
-                        Console.WriteLine(filePath);
                     }
                 }
             }
@@ -762,18 +773,19 @@ namespace GlacierTextConverter.Model
                         Categories.Add(category);
                     }
 
-                    foreach (var filePath in Directory.GetFiles(subdirectory + @"\" + categoryDirectory, "*", SearchOption.AllDirectories))
+                    var finalDirectory = subdirectory + @"\" + categoryDirectory;
+                    if (Directory.Exists(finalDirectory))
                     {
-                        try
+                        foreach (var filePath in Directory.GetFiles(subdirectory + @"\" + categoryDirectory, "*", SearchOption.AllDirectories))
                         {
-                            action(filePath, category);
-                        }
-                        catch (Exception e)
-                        {
-                            File.Delete(filePath);
-                            //var name = Path.GetFileName(filePath);
-                            //File.Copy(filePath, @"D:\deleted\" + name);
-                            //Console.WriteLine(filePath);
+                            try
+                            {
+                                action(filePath, category);
+                            }
+                            catch (Exception)
+                            {
+                                File.Delete(filePath);
+                            }
                         }
                     }
                 }

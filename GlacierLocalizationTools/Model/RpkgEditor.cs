@@ -58,11 +58,6 @@ namespace GlacierLocalizationTools.Model
 
             Directory.CreateDirectory(Path.GetDirectoryName(compoundName));
 
-            if (File.Exists(compoundName))
-            {
-                compoundName += @"_" + Path.GetFileNameWithoutExtension(((FileStream)reader.BaseStream).Name);
-            }
-
             try
             {
                 using (FileStream fileStream = File.Open(compoundName, FileMode.Create))
@@ -101,6 +96,26 @@ namespace GlacierLocalizationTools.Model
             }
         }
 
+        public void SaveRpkgFileStructure(RpkgBinaryWriter writer)
+        {
+            writer.Write(Archive);
+
+            for (int i = 0; i < Archive.NumberOfFiles; i++)
+            {
+                writer.Write(Archive.Entries[i]);
+            }
+
+            Archive.ResourceTableOffset = (uint)writer.BaseStream.Position;
+
+            for (int i = 0; i < Archive.NumberOfFiles; i++)
+            {
+                writer.Write(Archive.Entries[i].Info);
+            }
+
+            Archive.ResourceTableSize = (uint)writer.BaseStream.Position - Archive.ResourceTableOffset;
+            Archive.ResourceTableOffset -= 20;
+        }
+
         public void UpdateSavedRpkgFileStructure(RpkgBinaryWriter writer)
         {
             writer.BaseStream.Seek(0, SeekOrigin.Begin);
@@ -112,7 +127,7 @@ namespace GlacierLocalizationTools.Model
             long originalOffset = (long)rpkgEntry.Offset;
             rpkgEntry.Offset = (ulong)writer.BaseStream.Position;
 
-            if(rpkgEntry.Import != null)
+            if (rpkgEntry.Import != null)
             {
                 ImportNewFile(writer, rpkgEntry);
             }
@@ -131,7 +146,7 @@ namespace GlacierLocalizationTools.Model
             ImportNewFile(writer, rpkgEntry);
         }
 
-        private void ImportNewFile(RpkgBinaryWriter writer, RpkgEntry rpkgEntry)
+        public void ImportNewFile(RpkgBinaryWriter writer, RpkgEntry rpkgEntry)
         {
             var rawData = rpkgEntry.ImportRawData ?? File.ReadAllBytes(rpkgEntry.Import);
 
@@ -143,6 +158,16 @@ namespace GlacierLocalizationTools.Model
             {
                 writer.Write(rawData);
             }
+        }
+
+        public void InitializeHeader(List<RpkgEntry> entries)
+        {
+            Archive = new RpkgFileStructure
+            {
+                Signature = "GKPR",
+                Entries = entries,
+                NumberOfFiles = (uint) entries.Count
+            };
         }
     }
 }

@@ -83,6 +83,7 @@
     <Compile Include="ViewModel\BaseViewModel.cs" />
     <Compile Include="ViewModel\Commands\AbstractParameterCommand.cs" />
     <Compile Include="ViewModel\Commands\AbstractWorkerCommand.cs" />
+    <Compile Include="ViewModel\Commands\BuildByParameterCommand.cs" />
     <Compile Include="ViewModel\Commands\ExtractByParameterCommand.cs" />
     <Compile Include="ViewModel\Commands\ImportByParameterCommand.cs" />
     <Compile Include="ViewModel\OneTimeRunViewModel.cs" />

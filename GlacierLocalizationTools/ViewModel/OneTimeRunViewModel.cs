@@ -18,9 +18,11 @@ namespace GlacierLocalizationTools.ViewModel
         public bool TextsOnly { get; set; }
         public bool SeparateDirectories { get; set; }
         public bool Repack { get; set; }
+        public bool Build { get; set; }
         public string ZipFile { get; set; }
         public ICommand ExtractByParameterCommand { get; }
         public ICommand ImportByParameterCommand { get; }
+        public ICommand BuildByParameterCommand { get; }
 
         public OneTimeRunViewModel()
         {
@@ -29,6 +31,7 @@ namespace GlacierLocalizationTools.ViewModel
 
             ImportByParameterCommand = new ImportByParameterCommand();
             ExtractByParameterCommand = new ExtractByParameterCommand();
+            BuildByParameterCommand = new BuildByParameterCommand();
         }
 
         public void ParseCommandLine()
@@ -41,6 +44,11 @@ namespace GlacierLocalizationTools.ViewModel
                 .Add("separatedirs", value => SeparateDirectories = true)
                 .Add("textsonly", value => TextsOnly = true)
                 .Add("repack", value => Repack = true)
+                .Add("build", value =>
+                {
+                    Build = true;
+                    Export = false;
+                })
                 .Add("zip=", value => ZipFile = CreateFullPath(value, false));
 
             options.Parse(Environment.GetCommandLineArgs());
@@ -50,7 +58,7 @@ namespace GlacierLocalizationTools.ViewModel
         {
             if (_targetDirectory != null && _sourceDirectory != null)
             {
-                foreach(string file in Directory.GetFiles(_sourceDirectory, "*.rpkg"))
+                foreach (string file in Directory.GetFiles(_sourceDirectory, "*.rpkg"))
                 {
                     LoadedFilePath = file;
                     LoadStructure();
@@ -59,7 +67,7 @@ namespace GlacierLocalizationTools.ViewModel
 
                     if (TextsOnly)
                     {
-                        function = entry => new[] { "FXFG", "EGLD", "RCOL", "VLTR" }.Contains(entry.Info.Signature);
+                        function = entry => new[] { "EGLD", "RCOL", "VLTR" }.Contains(entry.Info.Signature);
                     }
 
                     string finalDirectory = _targetDirectory;
@@ -129,6 +137,34 @@ namespace GlacierLocalizationTools.ViewModel
             }
         }
 
+        public void BuildPatch()
+        {
+            if (_sourceDirectory != null && (Directory.Exists(_targetDirectory) || ZipFile != null))
+            {
+                var groups = new Dictionary<string, List<string>>();
+                var order = new List<string>();
+                
+                foreach (string file in Directory.GetFiles(_sourceDirectory, "*.rpkg"))
+                {
+                    var split = file.Split(new[] { $@"{_sourceDirectory}\", "patch", ".rpkg" }, StringSplitOptions.RemoveEmptyEntries);
+                    var packageName = split[0];
+                    order.Add(packageName);
+                    if (!groups.ContainsKey(packageName))
+                    {
+                        groups[packageName] = new List<string>();
+                    }
+                    groups[packageName].Add(file);
+                }
+
+                foreach (var packageGroupName in order.Distinct())
+                {
+                    var packages = groups[packageGroupName];
+                    var infoMap = CreateFileMapForPackageGroup(packages);
+                    var entries = LoadZipContent(packageGroupName, infoMap, ZipFile);
+                    SaveStructureByCreatingNewRpkg(packageGroupName, entries, _targetDirectory);
+                }
+            }
+        }
 
         private string CreateFullPath(string path, bool isDirectory)
         {
